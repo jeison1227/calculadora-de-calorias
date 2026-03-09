@@ -180,6 +180,13 @@ export default function HomeScreen() {
               📷 Analizar comida con foto
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: '#f59e0b' }]}
+            onPress={() => router.push('/recetas')}
+          >
+            <Text style={styles.buttonText}>🍽 Recetas</Text>
+          </TouchableOpacity>
         </>
       )}
 
@@ -238,11 +245,3 @@ const styles = StyleSheet.create({
   optionText: { textAlign: 'center', fontWeight: 'bold' },
   macroText: { textAlign: 'center', marginTop: 4, fontWeight: '600' },
 });
-<TouchableOpacity
-  style={[styles.button, { backgroundColor: '#2563eb' }]}
-  onPress={() => router.push('/manual')}
->
-  <Text style={styles.buttonText}>
-    ✍️ Calcular alimentos manualmente
-  </Text>
-</TouchableOpacity>
