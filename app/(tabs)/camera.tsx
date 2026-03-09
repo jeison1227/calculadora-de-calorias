@@ -44,7 +44,7 @@ export default function CameraScreen() {
   const enviarImagen = async (base64: string) => {
     try {
       const res = await fetch(
-        "http://10.0.2.2:3001/ia/analizar-imagen",
+        "http://192.168.1.13:3001/ia/analizar-imagen",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

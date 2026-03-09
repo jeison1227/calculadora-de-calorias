@@ -91,7 +91,7 @@ export default function HomeScreen() {
 
     // 🔗 BACKEND IA
     try {
-      const res = await fetch('http://10.0.2.2:3001/ia/calcular', {
+      const res = await fetch('http://192.168.1.13:3001/ia/calcular', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

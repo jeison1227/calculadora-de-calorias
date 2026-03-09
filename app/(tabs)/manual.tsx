@@ -27,7 +27,7 @@ export default function ManualFoodScreen() {
 
     try {
       const res = await fetch(
-        'http://10.0.2.2:3001/ia/calcular-manual',
+        'http://192.168.1.13:3001/ia/calcular-manual',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
