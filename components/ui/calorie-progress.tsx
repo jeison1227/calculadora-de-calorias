@@ -15,7 +15,7 @@ export function CalorieProgress({ consumed, target }: CalorieProgressProps) {
   useEffect(() => {
     Animated.timing(widthAnim, {
       toValue: progress,
-      duration: 700,
+      duration: 650,
       useNativeDriver: false,
     }).start();
   }, [progress, widthAnim]);
@@ -28,7 +28,7 @@ export function CalorieProgress({ consumed, target }: CalorieProgressProps) {
   return (
     <View style={styles.wrapper}>
       <View style={styles.labels}>
-        <Text style={styles.title}>Progreso de calorías</Text>
+        <Text style={styles.title}>Calorías de hoy</Text>
         <Text style={styles.value}>{consumed} / {target} kcal</Text>
       </View>
       <View style={styles.track}>
@@ -48,18 +48,16 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.caption,
-    color: palette.textPrimary,
-    fontWeight: '700',
+    color: '#D8E4FF',
   },
   value: {
     ...typography.caption,
-    color: palette.primaryDark,
-    fontWeight: '700',
+    color: palette.primary,
   },
   track: {
-    height: 12,
+    height: 10,
     borderRadius: radius.pill,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#243A64',
     overflow: 'hidden',
   },
   fill: {
