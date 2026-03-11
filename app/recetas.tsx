@@ -1,36 +1,38 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-const recipes = ['Pollo con arroz', 'Ensalada de quinoa', 'Omelette de verduras'];
+import { Card } from '@/components/ui/card';
+import { palette, spacing, typography } from '@/constants/design-system';
+
+const recipes = [
+  { name: 'Pollo con arroz integral', detail: '520 kcal · 38g proteína · 62g carbohidratos' },
+  { name: 'Ensalada de quinoa y atún', detail: '430 kcal · 31g proteína · 41g carbohidratos' },
+  { name: 'Omelette de verduras', detail: '360 kcal · 24g proteína · 18g carbohidratos' },
+];
 
 export default function RecetasScreen() {
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Recetas saludables</Text>
+      <Text style={styles.subtitle}>Ideas rápidas con buen balance de macros para tu objetivo diario.</Text>
 
-      {recipes.map(recipe => (
-        <Text key={recipe} style={styles.recipeItem}>
-          • {recipe}
-        </Text>
-      ))}
-    </View>
+      <View style={styles.list}>
+        {recipes.map(recipe => (
+          <Card key={recipe.name}>
+            <Text style={styles.recipeTitle}>{recipe.name}</Text>
+            <Text style={styles.recipeDetail}>{recipe.detail}</Text>
+          </Card>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  recipeItem: {
-    fontSize: 20,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
+  screen: { flex: 1, backgroundColor: palette.background },
+  content: { padding: spacing.md, gap: spacing.md },
+  title: { ...typography.title },
+  subtitle: { ...typography.body },
+  list: { gap: spacing.sm },
+  recipeTitle: { ...typography.subtitle, fontSize: 17 },
+  recipeDetail: { ...typography.body },
 });
