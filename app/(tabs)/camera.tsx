@@ -7,6 +7,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
+import { FadeInView } from '@/components/ui/fade-in-view';
+import { LoadingDots } from '@/components/ui/loading-dots';
 import { palette, spacing, typography } from '@/constants/design-system';
 
 export default function CameraScreen() {
@@ -17,13 +19,15 @@ export default function CameraScreen() {
 
   if (!permission?.granted) {
     return (
-      <View style={styles.permissionContainer}>
-        <Card style={styles.permissionCard}>
-          <Text style={styles.permissionTitle}>Permiso de cámara</Text>
-          <Text style={styles.permissionBody}>Necesitamos acceso para analizar tu comida desde una foto.</Text>
-          <AppButton title="Dar permiso" onPress={requestPermission} />
-        </Card>
-      </View>
+      <FadeInView style={styles.permissionContainer}>
+        <View style={styles.permissionContainer}>
+          <Card style={styles.permissionCard}>
+            <Text style={styles.permissionTitle}>Permiso de cámara</Text>
+            <Text style={styles.permissionBody}>Necesitamos acceso para analizar tu comida desde una foto.</Text>
+            <AppButton title="Dar permiso" onPress={requestPermission} />
+          </Card>
+        </View>
+      </FadeInView>
     );
   }
 
@@ -57,19 +61,22 @@ export default function CameraScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <CameraView ref={cameraRef} style={styles.camera} />
+    <FadeInView style={styles.container}>
+      <View style={styles.container}>
+        <CameraView ref={cameraRef} style={styles.camera} />
 
-      <View style={styles.overlay}>
-        <Card>
-          <Text style={styles.overlayTitle}>Análisis por foto</Text>
-          <Text style={styles.overlayBody}>Toma una imagen nítida del plato para estimar calorías y macros.</Text>
-          <AppButton title="Tomar foto" onPress={tomarFoto} loading={loading} />
-          <AppButton title="Volver" variant="ghost" onPress={() => router.back()} />
-          {resultado && <Text style={styles.result}>{resultado}</Text>}
-        </Card>
+        <View style={styles.overlay}>
+          <Card>
+            <Text style={styles.overlayTitle}>Análisis por foto</Text>
+            <Text style={styles.overlayBody}>Toma una imagen nítida del plato para estimar calorías y macros.</Text>
+            {loading && <LoadingDots />}
+            <AppButton title="Tomar foto" onPress={tomarFoto} loading={loading} />
+            <AppButton title="Volver" variant="ghost" onPress={() => router.back()} />
+            {resultado && <Text style={styles.result}>{resultado}</Text>}
+          </Card>
+        </View>
       </View>
-    </View>
+    </FadeInView>
   );
 }
 

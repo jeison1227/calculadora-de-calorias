@@ -1,12 +1,14 @@
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { Card } from '@/components/ui/card';
+import { FadeInView } from '@/components/ui/fade-in-view';
 import { Header } from '@/components/ui/header';
 import { palette, spacing, typography } from '@/constants/design-system';
 
 export default function InsightsScreen() {
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <FadeInView style={styles.screen}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Header title="Tu progreso" subtitle="Panel semanal para mantener consistencia y mejorar hábitos." />
 
       <Card>
@@ -24,7 +26,8 @@ export default function InsightsScreen() {
         <Text style={styles.cardTitle}>Promedio calórico</Text>
         <Text style={styles.cardBody}>1,940 kcal en los últimos 7 días.</Text>
       </Card>
-    </ScrollView>
+      </ScrollView>
+    </FadeInView>
   );
 }
 

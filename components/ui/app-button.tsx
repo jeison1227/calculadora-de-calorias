@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { useRef } from 'react';
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from 'react-native';
 
 import { palette, radius, spacing } from '@/constants/design-system';
 
@@ -17,21 +18,36 @@ export function AppButton({
   loading = false,
   disabled = false,
 }: AppButtonProps) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const animatePress = (toValue: number) => {
+    Animated.spring(scale, {
+      toValue,
+      useNativeDriver: true,
+      friction: 7,
+      tension: 220,
+    }).start();
+  };
+
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.base,
-        variantStyles[variant],
-        (pressed || disabled || loading) && styles.dimmed,
-      ]}
-      onPress={onPress}
-      disabled={disabled || loading}>
-      {loading ? (
-        <ActivityIndicator color={variant === 'ghost' ? palette.primary : '#FFFFFF'} />
-      ) : (
-        <Text style={[styles.text, variantTextStyles[variant]]}>{title}</Text>
-      )}
-    </Pressable>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.base,
+          variantStyles[variant],
+          (pressed || disabled || loading) && styles.dimmed,
+        ]}
+        onPress={onPress}
+        onPressIn={() => animatePress(0.96)}
+        onPressOut={() => animatePress(1)}
+        disabled={disabled || loading}>
+        {loading ? (
+          <ActivityIndicator color={variant === 'ghost' ? palette.primary : '#FFFFFF'} />
+        ) : (
+          <Text style={[styles.text, variantTextStyles[variant]]}>{title}</Text>
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 

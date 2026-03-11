@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
+import { FadeInView } from '@/components/ui/fade-in-view';
 import { Header } from '@/components/ui/header';
 import { palette, spacing, typography } from '@/constants/design-system';
 
@@ -12,7 +13,8 @@ const recipes = [
 
 export default function RecetasScreen() {
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <FadeInView style={styles.screen}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Header title="Recetas saludables" subtitle="Ideas rápidas con buen balance de macros para tu objetivo diario." />
 
       <View style={styles.list}>
@@ -23,7 +25,8 @@ export default function RecetasScreen() {
           </Card>
         ))}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </FadeInView>
   );
 }
 
