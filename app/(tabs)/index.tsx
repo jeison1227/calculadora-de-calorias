@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
+import { CalorieProgress } from '@/components/ui/calorie-progress';
 import { Card } from '@/components/ui/card';
+import { FadeInView } from '@/components/ui/fade-in-view';
 import { AppInput } from '@/components/ui/input';
 import { palette, radius, shadows, spacing, typography } from '@/constants/design-system';
 
@@ -56,6 +58,7 @@ export default function HomeScreen() {
   const [weight, setWeight] = useState('');
   const [calories, setCalories] = useState<number | null>(null);
   const [macros, setMacros] = useState<{ protein: number; carbs: number; fats: number } | null>(null);
+  const caloriesConsumed = calories ? Math.round(calories * 0.72) : 0;
 
   const saludar = () => {
     if (!name.trim()) return;
@@ -119,7 +122,8 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <FadeInView style={styles.screen}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.welcomeHeader}>
         <View>
           <Text style={styles.greeting}>¡Hola{name ? `, ${name}` : ''}! 👋</Text>
@@ -142,6 +146,8 @@ export default function HomeScreen() {
             ? 'Meta calórica recomendada para mantener constancia hoy.'
             : 'Completa tus datos para activar tu recomendación personalizada.'}
         </Text>
+
+        {calories && <CalorieProgress consumed={caloriesConsumed} target={calories} />}
 
         <View style={styles.macroRow}>
           <View style={styles.macroPill}>
@@ -235,7 +241,8 @@ export default function HomeScreen() {
           </Card>
         </>
       )}
-    </ScrollView>
+      </ScrollView>
+    </FadeInView>
   );
 }
 
