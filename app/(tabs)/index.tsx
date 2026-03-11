@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
 import {
+  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
@@ -48,6 +49,16 @@ const quickActions = [
   },
 ];
 
+const mealsToday = [
+  { name: 'Desayuno', detail: 'Avena, banana y nueces', calories: 410, icon: 'coffee-outline' as const },
+  { name: 'Almuerzo', detail: 'Pollo a la plancha con quinoa', calories: 620, icon: 'food-turkey' as const },
+  { name: 'Snack', detail: 'Yogur griego con frutos rojos', calories: 180, icon: 'cup-outline' as const },
+  { name: 'Cena', detail: 'Salmón con vegetales salteados', calories: 520, icon: 'fish' as const },
+];
+
+const weeklyCalories = [1680, 1770, 1620, 1840, 1720, 1900, 1760];
+const weeklyLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
 export default function HomeScreen() {
   const [step, setStep] = useState<'welcome' | 'goal' | 'data'>('welcome');
   const [name, setName] = useState('');
@@ -59,6 +70,10 @@ export default function HomeScreen() {
   const [calories, setCalories] = useState<number | null>(null);
   const [macros, setMacros] = useState<{ protein: number; carbs: number; fats: number } | null>(null);
   const caloriesConsumed = calories ? Math.round(calories * 0.72) : 0;
+  const currentTarget = calories ?? 2200;
+  const consumedToday = calories ? caloriesConsumed : 1730;
+  const chartMax = Math.max(...weeklyCalories) + 100;
+  const chartWidth = (Dimensions.get('window').width - spacing.md * 2 - spacing.md * 2 - spacing.md * 3) / 7;
 
   const saludar = () => {
     if (!name.trim()) return;
@@ -135,33 +150,72 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <Card style={styles.summaryCard}>
+      <Card style={styles.dashboardCard}>
         <View style={styles.summaryHeader}>
-          <Text style={styles.summaryTitle}>Resumen diario</Text>
-          <MaterialCommunityIcons name="fire" size={24} color={palette.accent} />
+          <Text style={styles.summaryTitle}>Dashboard diario</Text>
+          <MaterialCommunityIcons name="chart-line" size={24} color="#60A5FA" />
         </View>
-        <Text style={styles.kcal}>{calories ?? '--'} kcal</Text>
-        <Text style={styles.summarySubtext}>
-          {calories
-            ? 'Meta calórica recomendada para mantener constancia hoy.'
-            : 'Completa tus datos para activar tu recomendación personalizada.'}
-        </Text>
+        <Text style={styles.kcal}>{consumedToday} kcal</Text>
+        <Text style={styles.summarySubtext}>Has consumido {consumedToday} de {currentTarget} kcal hoy.</Text>
+        <CalorieProgress consumed={consumedToday} target={currentTarget} />
 
-        {calories && <CalorieProgress consumed={caloriesConsumed} target={calories} />}
+        <View style={styles.macroGrid}>
+          <View style={styles.macroCard}>
+            <MaterialCommunityIcons name="food-drumstick-outline" size={18} color="#2563EB" />
+            <Text style={styles.macroCardLabel}>Proteína</Text>
+            <Text style={styles.macroCardValue}>{macros?.protein ?? 142}g</Text>
+          </View>
+          <View style={styles.macroCard}>
+            <MaterialCommunityIcons name="bread-slice-outline" size={18} color="#D97706" />
+            <Text style={styles.macroCardLabel}>Carbos</Text>
+            <Text style={styles.macroCardValue}>{macros?.carbs ?? 220}g</Text>
+          </View>
+          <View style={styles.macroCard}>
+            <MaterialCommunityIcons name="water-outline" size={18} color="#0D9488" />
+            <Text style={styles.macroCardLabel}>Grasas</Text>
+            <Text style={styles.macroCardValue}>{macros?.fats ?? 73}g</Text>
+          </View>
+        </View>
+      </Card>
 
-        <View style={styles.macroRow}>
-          <View style={styles.macroPill}>
-            <MaterialCommunityIcons name="food-drumstick-outline" size={16} color={palette.primaryDark} />
-            <Text style={styles.macroText}>Prot {macros?.protein ?? '--'}g</Text>
-          </View>
-          <View style={styles.macroPill}>
-            <MaterialCommunityIcons name="bread-slice-outline" size={16} color={palette.primaryDark} />
-            <Text style={styles.macroText}>Carb {macros?.carbs ?? '--'}g</Text>
-          </View>
-          <View style={styles.macroPill}>
-            <MaterialCommunityIcons name="water-outline" size={16} color={palette.primaryDark} />
-            <Text style={styles.macroText}>Grasa {macros?.fats ?? '--'}g</Text>
-          </View>
+      <Card>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.cardTitle}>Comidas de hoy</Text>
+          <Text style={styles.cardHint}>4 registradas</Text>
+        </View>
+        <View style={styles.mealList}>
+          {mealsToday.map(meal => (
+            <View key={meal.name} style={styles.mealItem}>
+              <View style={styles.mealIconWrap}>
+                <MaterialCommunityIcons name={meal.icon} size={18} color={palette.primary} />
+              </View>
+              <View style={styles.mealTextWrap}>
+                <Text style={styles.mealName}>{meal.name}</Text>
+                <Text style={styles.mealDetail}>{meal.detail}</Text>
+              </View>
+              <Text style={styles.mealCalories}>{meal.calories} kcal</Text>
+            </View>
+          ))}
+        </View>
+      </Card>
+
+      <Card>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.cardTitle}>Calorías de la semana</Text>
+          <Text style={styles.cardHint}>Últimos 7 días</Text>
+        </View>
+        <View style={styles.chartRow}>
+          {weeklyCalories.map((value, index) => {
+            const height = Math.max(20, (value / chartMax) * 140);
+            const isToday = index === weeklyCalories.length - 1;
+
+            return (
+              <View key={`${weeklyLabels[index]}-${value}`} style={[styles.barWrap, { width: chartWidth }]}>
+                <View style={[styles.bar, { height, backgroundColor: isToday ? palette.primary : '#CBD5E1' }]} />
+                <Text style={[styles.barLabel, isToday && styles.barLabelActive]}>{weeklyLabels[index]}</Text>
+              </View>
+            );
+          })}
         </View>
       </Card>
 
@@ -287,7 +341,7 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: palette.primaryDark,
   },
-  summaryCard: {
+  dashboardCard: {
     backgroundColor: '#0F172A',
     borderColor: '#1E293B',
   },
@@ -309,25 +363,100 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
   },
-  macroRow: {
+  macroGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.sm,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
-  macroPill: {
+  macroCard: {
+    flex: 1,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    gap: 4,
+  },
+  macroCardLabel: {
+    ...typography.caption,
+    color: '#94A3B8',
+  },
+  macroCardValue: {
+    ...typography.caption,
+    color: '#F8FAFC',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: '#E2E8F0',
-    borderRadius: radius.pill,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.sm,
+    justifyContent: 'space-between',
   },
-  macroText: {
+  cardHint: {
+    ...typography.caption,
+    color: '#64748B',
+  },
+  mealList: {
+    marginTop: spacing.sm,
+    gap: spacing.sm,
+  },
+  mealItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    backgroundColor: '#F8FAFC',
+  },
+  mealIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mealTextWrap: {
+    flex: 1,
+  },
+  mealName: {
+    ...typography.body,
+    fontWeight: '700',
+    color: palette.textPrimary,
+  },
+  mealDetail: {
+    ...typography.caption,
+  },
+  mealCalories: {
     ...typography.caption,
     color: '#0F172A',
     fontWeight: '700',
+  },
+  chartRow: {
+    marginTop: spacing.sm,
+    height: 170,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
+  },
+  barWrap: {
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  bar: {
+    width: '100%',
+    borderRadius: radius.md,
+  },
+  barLabel: {
+    ...typography.caption,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  barLabelActive: {
+    color: palette.primaryDark,
   },
   sectionHeader: {
     paddingHorizontal: spacing.xs,
