@@ -1,13 +1,13 @@
 import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { Card } from '@/components/ui/card';
+import { Header } from '@/components/ui/header';
 import { palette, spacing, typography } from '@/constants/design-system';
 
 export default function InsightsScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Tu progreso</Text>
-      <Text style={styles.subtitle}>Panel semanal para mantener consistencia y mejorar hábitos.</Text>
+      <Header title="Tu progreso" subtitle="Panel semanal para mantener consistencia y mejorar hábitos." />
 
       <Card>
         <Text style={styles.cardTitle}>Racha actual</Text>
@@ -31,8 +31,6 @@ export default function InsightsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: palette.background },
   content: { padding: spacing.md, gap: spacing.md },
-  title: { ...typography.title },
-  subtitle: { ...typography.body },
   cardTitle: { ...typography.subtitle },
   cardBody: { ...typography.body },
   bigMetric: {

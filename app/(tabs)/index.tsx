@@ -6,13 +6,14 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
+import { Header } from '@/components/ui/header';
+import { AppInput } from '@/components/ui/input';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
 
 type Goal = 'bajar' | 'subir' | 'mantener';
@@ -92,14 +93,16 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.headerTitle}>Calorie Pro</Text>
-      <Text style={styles.headerSubtitle}>Planifica tus calorías y macronutrientes con una experiencia clara y moderna.</Text>
+      <Header
+        title="Calorie Pro"
+        subtitle="Planifica tus calorías y macronutrientes con una experiencia clara y moderna."
+      />
 
       {step === 'welcome' && (
         <Card>
           <Text style={styles.cardTitle}>Comencemos</Text>
           <Text style={styles.cardBody}>Dinos tu nombre para personalizar tu plan nutricional.</Text>
-          <TextInput style={styles.input} placeholder="Tu nombre" value={name} onChangeText={setName} placeholderTextColor="#94A3B8" />
+          <AppInput placeholder="Tu nombre" value={name} onChangeText={setName} />
           <AppButton
             title="Continuar"
             onPress={() => {
@@ -139,9 +142,9 @@ export default function HomeScreen() {
           <Card>
             <Text style={styles.cardTitle}>Tus datos</Text>
             <Text style={styles.cardBody}>Completa tus medidas para calcular una recomendación diaria.</Text>
-            <TextInput style={styles.input} placeholder="Edad" keyboardType="numeric" value={age} onChangeText={setAge} placeholderTextColor="#94A3B8" />
-            <TextInput style={styles.input} placeholder="Estatura (cm)" keyboardType="numeric" value={height} onChangeText={setHeight} placeholderTextColor="#94A3B8" />
-            <TextInput style={styles.input} placeholder="Peso (kg)" keyboardType="numeric" value={weight} onChangeText={setWeight} placeholderTextColor="#94A3B8" />
+            <AppInput placeholder="Edad" keyboardType="numeric" value={age} onChangeText={setAge} />
+            <AppInput placeholder="Estatura (cm)" keyboardType="numeric" value={height} onChangeText={setHeight} />
+            <AppInput placeholder="Peso (kg)" keyboardType="numeric" value={weight} onChangeText={setWeight} />
           </Card>
 
           <Card>
@@ -183,30 +186,12 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     gap: spacing.md,
   },
-  headerTitle: {
-    ...typography.title,
-    marginTop: spacing.sm,
-  },
-  headerSubtitle: {
-    ...typography.body,
-    marginBottom: spacing.xs,
-  },
   cardTitle: {
     ...typography.subtitle,
   },
   cardBody: {
     ...typography.body,
     marginBottom: spacing.xs,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
-    fontSize: 15,
-    color: palette.textPrimary,
-    backgroundColor: '#F8FAFC',
   },
   optionGrid: {
     flexDirection: 'row',
@@ -226,7 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E7FF',
   },
   pillText: {
-    ...typography.label,
+    ...typography.caption,
   },
   pillTextActive: {
     color: palette.primaryDark,
@@ -246,7 +231,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#DCFCE7',
   },
   optionText: {
-    ...typography.label,
+    ...typography.caption,
     textTransform: 'capitalize',
   },
   optionTextActive: {
