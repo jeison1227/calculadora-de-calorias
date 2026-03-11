@@ -1,9 +1,13 @@
-import { CameraView, useCameraPermissions } from "expo-camera";
-import * as ImageManipulator from "expo-image-manipulator";
-import { router } from "expo-router";
-import * as Speech from "expo-speech";
-import { useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { router } from 'expo-router';
+import * as Speech from 'expo-speech';
+import { useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+
+import { AppButton } from '@/components/ui/app-button';
+import { Card } from '@/components/ui/card';
+import { palette, spacing, typography } from '@/constants/design-system';
 
 export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -13,102 +17,81 @@ export default function CameraScreen() {
 
   if (!permission?.granted) {
     return (
-      <View style={styles.center}>
-        <Text>Necesitamos permiso para la cámara</Text>
-        <TouchableOpacity onPress={requestPermission}>
-          <Text style={{ color: "blue" }}>Dar permiso</Text>
-        </TouchableOpacity>
+      <View style={styles.permissionContainer}>
+        <Card style={styles.permissionCard}>
+          <Text style={styles.permissionTitle}>Permiso de cámara</Text>
+          <Text style={styles.permissionBody}>Necesitamos acceso para analizar tu comida desde una foto.</Text>
+          <AppButton title="Dar permiso" onPress={requestPermission} />
+        </Card>
       </View>
     );
   }
 
   const tomarFoto = async () => {
     if (!cameraRef.current) return;
-
     setLoading(true);
 
-    const foto = await cameraRef.current.takePictureAsync({
-      base64: true,
-      quality: 0.7,
-    });
-
+    const foto = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.7 });
     const reducida = await ImageManipulator.manipulateAsync(
       foto.uri,
       [{ resize: { width: 800 } }],
       { base64: true }
     );
 
-    await enviarImagen(reducida.base64!);
-  };
-
-  const enviarImagen = async (base64: string) => {
     try {
-      const res = await fetch(
-        "http://192.168.1.13:3001/ia/analizar-imagen",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            imageBase64: `data:image/jpeg;base64,${base64}`,
-          }),
-        }
-      );
+      const res = await fetch('http://192.168.1.13:3001/ia/analizar-imagen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: `data:image/jpeg;base64,${reducida.base64}` }),
+      });
 
       const data = await res.json();
       setResultado(data.respuestaIA);
-
-      Speech.speak(data.respuestaIA, { language: "es" });
+      Speech.speak(data.respuestaIA, { language: 'es' });
     } catch (error) {
-      console.log("❌ Error IA imagen:", error);
-      Speech.speak("Ocurrió un error analizando la imagen", {
-        language: "es",
-      });
+      console.log('❌ Error IA imagen:', error);
+      Speech.speak('Ocurrió un error analizando la imagen', { language: 'es' });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <CameraView ref={cameraRef} style={{ flex: 1 }} />
+    <View style={styles.container}>
+      <CameraView ref={cameraRef} style={styles.camera} />
 
-      <View style={styles.controls}>
-        <TouchableOpacity style={styles.button} onPress={tomarFoto}>
-          <Text style={styles.buttonText}>
-            {loading ? "Analizando..." : "📸 Tomar foto"}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#444" }]}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.buttonText}>⬅ Volver</Text>
-        </TouchableOpacity>
-
-        {resultado && (
-          <Text style={styles.resultado}>{resultado}</Text>
-        )}
+      <View style={styles.overlay}>
+        <Card>
+          <Text style={styles.overlayTitle}>Análisis por foto</Text>
+          <Text style={styles.overlayBody}>Toma una imagen nítida del plato para estimar calorías y macros.</Text>
+          <AppButton title="Tomar foto" onPress={tomarFoto} loading={loading} />
+          <AppButton title="Volver" variant="ghost" onPress={() => router.back()} />
+          {resultado && <Text style={styles.result}>{resultado}</Text>}
+        </Card>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  controls: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    padding: 16,
-    backgroundColor: "rgba(0,0,0,0.6)",
+  container: { flex: 1, backgroundColor: '#000' },
+  camera: { flex: 1 },
+  overlay: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
   },
-  button: {
-    backgroundColor: "#16a34a",
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 10,
+  overlayTitle: { ...typography.subtitle },
+  overlayBody: { ...typography.body },
+  result: { ...typography.body, color: palette.textPrimary, fontWeight: '600' },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: spacing.md,
+    backgroundColor: palette.background,
   },
-  buttonText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
-  resultado: { color: "#fff", textAlign: "center", marginTop: 10 },
+  permissionCard: { gap: spacing.md },
+  permissionTitle: { ...typography.subtitle },
+  permissionBody: { ...typography.body },
 });
