@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useEffect, useState } from 'react';
@@ -12,12 +13,38 @@ import {
 
 import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
-import { Header } from '@/components/ui/header';
 import { AppInput } from '@/components/ui/input';
-import { palette, radius, spacing, typography } from '@/constants/design-system';
+import { palette, radius, shadows, spacing, typography } from '@/constants/design-system';
 
 type Goal = 'bajar' | 'subir' | 'mantener';
 type ActivityLevel = 'sedentaria' | 'baja' | 'moderada' | 'alta';
+
+const goalLabels: Record<Goal, string> = {
+  bajar: 'Bajar peso',
+  subir: 'Ganar masa',
+  mantener: 'Mantener',
+};
+
+const quickActions = [
+  {
+    title: 'Analizar comida',
+    subtitle: 'Escanea tu plato con IA',
+    icon: 'camera-outline' as const,
+    onPress: () => router.push('/camera'),
+  },
+  {
+    title: 'Registro manual',
+    subtitle: 'Añade alimentos fácilmente',
+    icon: 'clipboard-text-outline' as const,
+    onPress: () => router.push('/manual'),
+  },
+  {
+    title: 'Recetas saludables',
+    subtitle: 'Ideas balanceadas para hoy',
+    icon: 'silverware-fork-knife' as const,
+    onPress: () => router.push('/recetas'),
+  },
+];
 
 export default function HomeScreen() {
   const [step, setStep] = useState<'welcome' | 'goal' | 'data'>('welcome');
@@ -93,10 +120,60 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Header
-        title="Calorie Pro"
-        subtitle="Planifica tus calorías y macronutrientes con una experiencia clara y moderna."
-      />
+      <View style={styles.welcomeHeader}>
+        <View>
+          <Text style={styles.greeting}>¡Hola{name ? `, ${name}` : ''}! 👋</Text>
+          <Text style={styles.welcomeBody}>Tu panel de bienestar para planificar un día saludable.</Text>
+        </View>
+        <View style={styles.goalBadge}>
+          <MaterialCommunityIcons name="target" size={16} color={palette.primaryDark} />
+          <Text style={styles.goalText}>{goal ? goalLabels[goal] : 'Define objetivo'}</Text>
+        </View>
+      </View>
+
+      <Card style={styles.summaryCard}>
+        <View style={styles.summaryHeader}>
+          <Text style={styles.summaryTitle}>Resumen diario</Text>
+          <MaterialCommunityIcons name="fire" size={24} color={palette.accent} />
+        </View>
+        <Text style={styles.kcal}>{calories ?? '--'} kcal</Text>
+        <Text style={styles.summarySubtext}>
+          {calories
+            ? 'Meta calórica recomendada para mantener constancia hoy.'
+            : 'Completa tus datos para activar tu recomendación personalizada.'}
+        </Text>
+
+        <View style={styles.macroRow}>
+          <View style={styles.macroPill}>
+            <MaterialCommunityIcons name="food-drumstick-outline" size={16} color={palette.primaryDark} />
+            <Text style={styles.macroText}>Prot {macros?.protein ?? '--'}g</Text>
+          </View>
+          <View style={styles.macroPill}>
+            <MaterialCommunityIcons name="bread-slice-outline" size={16} color={palette.primaryDark} />
+            <Text style={styles.macroText}>Carb {macros?.carbs ?? '--'}g</Text>
+          </View>
+          <View style={styles.macroPill}>
+            <MaterialCommunityIcons name="water-outline" size={16} color={palette.primaryDark} />
+            <Text style={styles.macroText}>Grasa {macros?.fats ?? '--'}g</Text>
+          </View>
+        </View>
+      </Card>
+
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Acciones rápidas</Text>
+      </View>
+      <View style={styles.quickActionsGrid}>
+        {quickActions.map(action => (
+          <TouchableOpacity key={action.title} style={styles.actionButton} onPress={action.onPress}>
+            <MaterialCommunityIcons name={action.icon} size={24} color={palette.primary} />
+            <View style={styles.actionTextWrap}>
+              <Text style={styles.actionTitle}>{action.title}</Text>
+              <Text style={styles.actionSubtitle}>{action.subtitle}</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color="#94A3B8" />
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {step === 'welcome' && (
         <Card>
@@ -130,10 +207,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
             ))}
           </View>
-          <View style={styles.actionsRow}>
-            <AppButton title="Analizar comida" variant="secondary" onPress={() => router.push('/camera')} />
-            <AppButton title="Ver recetas" variant="ghost" onPress={() => router.push('/recetas')} />
-          </View>
         </Card>
       )}
 
@@ -160,16 +233,6 @@ export default function HomeScreen() {
             ))}
             <AppButton title="Calcular plan" onPress={calcularCalorias} />
           </Card>
-
-          {calories && macros && (
-            <Card>
-              <Text style={styles.cardTitle}>Resumen diario</Text>
-              <Text style={styles.kcal}>{calories} kcal</Text>
-              <Text style={styles.metric}>🥩 Proteína: {macros.protein} g</Text>
-              <Text style={styles.metric}>🍞 Carbohidratos: {macros.carbs} g</Text>
-              <Text style={styles.metric}>🥑 Grasas: {macros.fats} g</Text>
-            </Card>
-          )}
         </>
       )}
     </ScrollView>
@@ -179,12 +242,118 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: palette.background,
+    backgroundColor: '#EEF4FF',
   },
   content: {
     padding: spacing.md,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.xl,
     gap: spacing.md,
+  },
+  welcomeHeader: {
+    backgroundColor: palette.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: '#DCE6FF',
+    gap: spacing.sm,
+    ...shadows,
+  },
+  greeting: {
+    ...typography.subtitle,
+    color: palette.textPrimary,
+  },
+  welcomeBody: {
+    ...typography.body,
+  },
+  goalBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: spacing.xs,
+    backgroundColor: '#E0E7FF',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.pill,
+  },
+  goalText: {
+    ...typography.caption,
+    color: palette.primaryDark,
+  },
+  summaryCard: {
+    backgroundColor: '#0F172A',
+    borderColor: '#1E293B',
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryTitle: {
+    ...typography.subtitle,
+    color: '#FFFFFF',
+  },
+  summarySubtext: {
+    ...typography.caption,
+    color: '#CBD5E1',
+  },
+  kcal: {
+    fontSize: 40,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  macroRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  macroPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: '#E2E8F0',
+    borderRadius: radius.pill,
+    paddingVertical: 6,
+    paddingHorizontal: spacing.sm,
+  },
+  macroText: {
+    ...typography.caption,
+    color: '#0F172A',
+    fontWeight: '700',
+  },
+  sectionHeader: {
+    paddingHorizontal: spacing.xs,
+  },
+  sectionTitle: {
+    ...typography.subtitle,
+    fontSize: 18,
+  },
+  quickActionsGrid: {
+    gap: spacing.sm,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: palette.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...shadows,
+  },
+  actionTextWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  actionTitle: {
+    ...typography.body,
+    color: palette.textPrimary,
+    fontWeight: '700',
+  },
+  actionSubtitle: {
+    ...typography.caption,
   },
   cardTitle: {
     ...typography.subtitle,
@@ -216,9 +385,6 @@ const styles = StyleSheet.create({
   pillTextActive: {
     color: palette.primaryDark,
   },
-  actionsRow: {
-    gap: spacing.sm,
-  },
   optionRow: {
     borderWidth: 1,
     borderColor: palette.border,
@@ -236,15 +402,5 @@ const styles = StyleSheet.create({
   },
   optionTextActive: {
     color: '#166534',
-  },
-  kcal: {
-    fontSize: 38,
-    fontWeight: '800',
-    color: palette.primary,
-  },
-  metric: {
-    ...typography.body,
-    color: palette.textPrimary,
-    fontWeight: '600',
   },
 });
