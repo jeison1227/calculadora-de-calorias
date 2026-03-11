@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
+import { Header } from '@/components/ui/header';
 import { palette, spacing, typography } from '@/constants/design-system';
 
 const recipes = [
@@ -12,8 +13,7 @@ const recipes = [
 export default function RecetasScreen() {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Recetas saludables</Text>
-      <Text style={styles.subtitle}>Ideas rápidas con buen balance de macros para tu objetivo diario.</Text>
+      <Header title="Recetas saludables" subtitle="Ideas rápidas con buen balance de macros para tu objetivo diario." />
 
       <View style={styles.list}>
         {recipes.map(recipe => (
@@ -30,8 +30,6 @@ export default function RecetasScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: palette.background },
   content: { padding: spacing.md, gap: spacing.md },
-  title: { ...typography.title },
-  subtitle: { ...typography.body },
   list: { gap: spacing.sm },
   recipeTitle: { ...typography.subtitle, fontSize: 17 },
   recipeDetail: { ...typography.body },
