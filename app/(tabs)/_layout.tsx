@@ -9,45 +9,55 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: palette.primary,
-        tabBarInactiveTintColor: '#64748B',
-        tabBarActiveBackgroundColor: palette.surface,
-        tabBarStyle: {
-          height: 68,
-          paddingBottom: spacing.sm,
-          paddingTop: spacing.sm,
-          backgroundColor: palette.background,
-          borderTopColor: palette.border,
-        },
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarShowLabel: true,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '700',
+          marginTop: 2,
+        },
+        tabBarActiveTintColor: palette.primary,
+        tabBarInactiveTintColor: '#6F83AE',
+        tabBarStyle: {
+          position: 'absolute',
+          height: 76,
+          paddingBottom: spacing.sm,
+          paddingTop: spacing.sm,
+          marginHorizontal: spacing.md,
+          marginBottom: spacing.sm,
+          backgroundColor: palette.surface,
+          borderTopWidth: 1,
+          borderColor: palette.border,
+          borderRadius: 22,
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Inicio',
-          tabBarIcon: ({ color }) => <IconSymbol size={22} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={20} name="house.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="manual"
         options={{
           title: 'Manual',
-          tabBarIcon: ({ color }) => <IconSymbol size={22} name="list.bullet.clipboard.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={20} name="square.and.pencil" color={color} />,
         }}
       />
       <Tabs.Screen
         name="camera"
         options={{
-          title: 'Cámara',
-          tabBarIcon: ({ color }) => <IconSymbol size={22} name="camera.fill" color={color} />,
+          title: 'Escanear',
+          tabBarIcon: ({ color }) => <IconSymbol size={20} name="camera.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Progreso',
-          tabBarIcon: ({ color }) => <IconSymbol size={22} name="chart.line.uptrend.xyaxis" color={color} />,
+          title: 'Insights',
+          tabBarIcon: ({ color }) => <IconSymbol size={20} name="chart.bar.fill" color={color} />,
         }}
       />
     </Tabs>

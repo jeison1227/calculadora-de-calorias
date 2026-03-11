@@ -24,8 +24,8 @@ export function AppButton({
     Animated.spring(scale, {
       toValue,
       useNativeDriver: true,
-      friction: 7,
-      tension: 220,
+      friction: 6,
+      tension: 210,
     }).start();
   };
 
@@ -38,7 +38,7 @@ export function AppButton({
           (pressed || disabled || loading) && styles.dimmed,
         ]}
         onPress={onPress}
-        onPressIn={() => animatePress(0.96)}
+        onPressIn={() => animatePress(0.97)}
         onPressOut={() => animatePress(1)}
         disabled={disabled || loading}>
         {loading ? (
@@ -54,14 +54,15 @@ export function AppButton({
 const styles = StyleSheet.create({
   base: {
     borderRadius: radius.md,
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.sm + 4,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   dimmed: {
     opacity: 0.75,
@@ -76,20 +77,20 @@ const variantStyles = StyleSheet.create({
     backgroundColor: palette.secondary,
   },
   ghost: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#152646',
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: palette.border,
   },
 });
 
 const variantTextStyles = StyleSheet.create({
   primary: {
-    color: '#FFFFFF',
+    color: '#001B0B',
   },
   secondary: {
     color: '#FFFFFF',
   },
   ghost: {
-    color: palette.primary,
+    color: palette.textPrimary,
   },
 });
