@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -13,6 +12,7 @@ import { FadeInView } from '@/components/ui/fade-in-view';
 import { Header } from '@/components/ui/header';
 import { LoadingDots } from '@/components/ui/loading-dots';
 import { palette, spacing, typography } from '@/constants/design-system';
+import { addMealToHistory, toNumber } from '@/libreria/meal-history';
 
 type DetectedFood = {
   name: string;
@@ -21,9 +21,6 @@ type DetectedFood = {
   carbs: number;
   fat: number;
 };
-
-const MEAL_HISTORY_KEY = 'mealHistory';
-const toNumber = (value: unknown) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 
 const parseFoodsFromText = (rawText: string): DetectedFood[] =>
   rawText
@@ -79,10 +76,13 @@ export default function CameraScreen() {
     if (!foods.length) return;
     setSaving(true);
     try {
-      const existing = await AsyncStorage.getItem(MEAL_HISTORY_KEY);
-      const parsedHistory = existing ? JSON.parse(existing) : [];
-      const nextHistory = [{ id: Date.now().toString(), createdAt: new Date().toISOString(), imageUri: capturedImageUri, foods, totals, notes: resultado }, ...(Array.isArray(parsedHistory) ? parsedHistory : [])];
-      await AsyncStorage.setItem(MEAL_HISTORY_KEY, JSON.stringify(nextHistory));
+      await addMealToHistory({
+        imageUri: capturedImageUri,
+        foods,
+        totals,
+        notes: resultado,
+        source: 'camera',
+      });
       Speech.speak('Comida guardada en tu historial', { language: 'es' });
       Alert.alert('Guardado', 'La comida se guardó en el historial correctamente.');
     } catch (error) {
