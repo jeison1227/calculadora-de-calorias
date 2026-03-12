@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Speech from 'expo-speech';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
@@ -10,12 +10,45 @@ import { Header } from '@/components/ui/header';
 import { AppInput } from '@/components/ui/input';
 import { LoadingDots } from '@/components/ui/loading-dots';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
+import { addMealToHistory, toNumber } from '@/libreria/meal-history';
 
 export default function ManualFoodScreen() {
   const [food, setFood] = useState('');
   const [grams, setGrams] = useState('');
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const extractMetric = (text: string, regex: RegExp) => {
+    const match = text.match(regex);
+    return toNumber(match?.[1]?.replace(',', '.'));
+  };
+
+  const saveManualMeal = async () => {
+    if (!result) return;
+    setSaving(true);
+    try {
+      const calories = extractMetric(result, /(\d+(?:[.,]\d+)?)\s*kcal/i);
+      const protein = extractMetric(result, /(?:prote[ií]na|protein|p)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+      const carbs = extractMetric(result, /(?:carbohidratos|carbs?|c)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+      const fat = extractMetric(result, /(?:grasas?|fat|g)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+
+      await addMealToHistory({
+        source: 'manual',
+        notes: result,
+        foods: [{ name: `${food} (${grams}g)`, calories, protein, carbs, fat }],
+        totals: { calories, protein, carbs, fat },
+      });
+
+      Speech.speak('Comida manual guardada', { language: 'es' });
+      Alert.alert('Guardado', 'La comida manual se guardó en el historial.');
+    } catch (error) {
+      console.log('❌ Error guardando comida manual:', error);
+      Alert.alert('Error', 'No se pudo guardar la comida manual.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const calcularManual = async () => {
     if (!food || !grams) {
@@ -60,6 +93,7 @@ export default function ManualFoodScreen() {
           <Card style={styles.resultCard}>
             <Text style={styles.resultTitle}>Resultado IA</Text>
             <Text style={styles.resultText}>{result}</Text>
+            <AppButton title="Guardar en historial" onPress={saveManualMeal} loading={saving} />
           </Card>
         )}
       </ScrollView>
