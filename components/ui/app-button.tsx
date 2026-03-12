@@ -1,7 +1,8 @@
 import { useRef } from 'react';
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from 'react-native';
 
-import { palette, radius, spacing } from '@/constants/design-system';
+import { radius, spacing } from '@/constants/design-system';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
 type AppButtonProps = {
   title: string;
@@ -18,6 +19,7 @@ export function AppButton({
   loading = false,
   disabled = false,
 }: AppButtonProps) {
+  const { colors } = useAppTheme();
   const scale = useRef(new Animated.Value(1)).current;
 
   const animatePress = (toValue: number) => {
@@ -29,20 +31,28 @@ export function AppButton({
     }).start();
   };
 
+  const variantStyles = {
+    primary: { backgroundColor: colors.primary },
+    secondary: { backgroundColor: colors.secondary },
+    ghost: { backgroundColor: colors.backgroundSoft, borderWidth: 1, borderColor: colors.border },
+  } as const;
+
+  const variantTextStyles = {
+    primary: { color: colors.background },
+    secondary: { color: '#FFFFFF' },
+    ghost: { color: colors.textPrimary },
+  } as const;
+
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
       <Pressable
-        style={({ pressed }) => [
-          styles.base,
-          variantStyles[variant],
-          (pressed || disabled || loading) && styles.dimmed,
-        ]}
+        style={({ pressed }) => [styles.base, variantStyles[variant], (pressed || disabled || loading) && styles.dimmed]}
         onPress={onPress}
         onPressIn={() => animatePress(0.97)}
         onPressOut={() => animatePress(1)}
         disabled={disabled || loading}>
         {loading ? (
-          <ActivityIndicator color={variant === 'ghost' ? palette.primary : '#FFFFFF'} />
+          <ActivityIndicator color={variant === 'ghost' ? colors.primary : '#FFFFFF'} />
         ) : (
           <Text style={[styles.text, variantTextStyles[variant]]}>{title}</Text>
         )}
@@ -66,31 +76,5 @@ const styles = StyleSheet.create({
   },
   dimmed: {
     opacity: 0.75,
-  },
-});
-
-const variantStyles = StyleSheet.create({
-  primary: {
-    backgroundColor: palette.primary,
-  },
-  secondary: {
-    backgroundColor: palette.secondary,
-  },
-  ghost: {
-    backgroundColor: '#152646',
-    borderWidth: 1,
-    borderColor: palette.border,
-  },
-});
-
-const variantTextStyles = StyleSheet.create({
-  primary: {
-    color: '#001B0B',
-  },
-  secondary: {
-    color: '#FFFFFF',
-  },
-  ghost: {
-    color: palette.textPrimary,
   },
 });

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 
-import { palette, radius, spacing, typography } from '@/constants/design-system';
+import { radius, spacing } from '@/constants/design-system';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
 type CalorieProgressProps = {
   consumed: number;
@@ -9,6 +10,7 @@ type CalorieProgressProps = {
 };
 
 export function CalorieProgress({ consumed, target }: CalorieProgressProps) {
+  const { colors, typography } = useAppTheme();
   const progress = useMemo(() => Math.min(consumed / target, 1), [consumed, target]);
   const widthAnim = useRef(new Animated.Value(0)).current;
 
@@ -28,11 +30,11 @@ export function CalorieProgress({ consumed, target }: CalorieProgressProps) {
   return (
     <View style={styles.wrapper}>
       <View style={styles.labels}>
-        <Text style={styles.title}>Calorías de hoy</Text>
-        <Text style={styles.value}>{consumed} / {target} kcal</Text>
+        <Text style={[typography.caption, { color: colors.textSecondary }]}>Calorías de hoy</Text>
+        <Text style={[typography.caption, { color: colors.primary }]}>{consumed} / {target} kcal</Text>
       </View>
-      <View style={styles.track}>
-        <Animated.View style={[styles.fill, { width }]} />
+      <View style={[styles.track, { backgroundColor: colors.border }]}> 
+        <Animated.View style={[styles.fill, { width, backgroundColor: colors.primary }]} />
       </View>
     </View>
   );
@@ -46,23 +48,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  title: {
-    ...typography.caption,
-    color: '#D8E4FF',
-  },
-  value: {
-    ...typography.caption,
-    color: palette.primary,
-  },
   track: {
     height: 10,
     borderRadius: radius.pill,
-    backgroundColor: '#243A64',
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
     borderRadius: radius.pill,
-    backgroundColor: palette.primary,
   },
 });

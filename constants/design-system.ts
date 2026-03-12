@@ -1,7 +1,21 @@
 import { Platform } from 'react-native';
 
-export const theme = {
-  colors: {
+export const colorSchemes = {
+  light: {
+    primary: '#15803D',
+    primaryDark: '#166534',
+    secondary: '#0369A1',
+    accent: '#C2410C',
+    background: '#F5F7FB',
+    backgroundSoft: '#EAF0FA',
+    surface: '#FFFFFF',
+    surfaceElevated: '#F8FAFC',
+    textPrimary: '#0F172A',
+    textSecondary: '#334155',
+    border: '#CBD5E1',
+    success: '#059669',
+  },
+  dark: {
     primary: '#22C55E',
     primaryDark: '#16A34A',
     secondary: '#0EA5E9',
@@ -15,68 +29,74 @@ export const theme = {
     border: '#243A64',
     success: '#34D399',
   },
-  typography: {
-    title: {
-      fontSize: 32,
-      fontWeight: '800' as const,
-      lineHeight: 38,
-      letterSpacing: 0.2,
-    },
-    subtitle: {
-      fontSize: 22,
-      fontWeight: '700' as const,
-      lineHeight: 30,
-      letterSpacing: 0.15,
-    },
-    body: {
-      fontSize: 15,
-      fontWeight: '500' as const,
-      lineHeight: 22,
-    },
-    caption: {
-      fontSize: 12,
-      fontWeight: '600' as const,
-      lineHeight: 16,
-      letterSpacing: 0.25,
-    },
-  },
-  spacing: {
-    xs: 6,
-    sm: 10,
-    md: 18,
-    lg: 28,
-    xl: 36,
-  },
-  radius: {
-    sm: 12,
-    md: 18,
-    lg: 26,
-    pill: 999,
-  },
+} as const;
+
+export type AppColorScheme = keyof typeof colorSchemes;
+export type AppColors = (typeof colorSchemes)[AppColorScheme];
+
+export const spacing = {
+  xs: 6,
+  sm: 10,
+  md: 18,
+  lg: 28,
+  xl: 36,
 };
 
-export const palette = theme.colors;
-export const spacing = theme.spacing;
-export const radius = theme.radius;
+export const radius = {
+  sm: 12,
+  md: 18,
+  lg: 26,
+  pill: 999,
+};
 
-export const typography = {
+const baseTypography = {
   title: {
-    ...theme.typography.title,
-    color: theme.colors.textPrimary,
+    fontSize: 32,
+    fontWeight: '800' as const,
+    lineHeight: 38,
+    letterSpacing: 0.2,
   },
   subtitle: {
-    ...theme.typography.subtitle,
-    color: theme.colors.textPrimary,
+    fontSize: 22,
+    fontWeight: '700' as const,
+    lineHeight: 30,
+    letterSpacing: 0.15,
   },
   body: {
-    ...theme.typography.body,
-    color: theme.colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '500' as const,
+    lineHeight: 22,
   },
   caption: {
-    ...theme.typography.caption,
-    color: theme.colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600' as const,
+    lineHeight: 16,
+    letterSpacing: 0.25,
   },
 };
+
+export const getTypography = (colors: AppColors) => ({
+  title: {
+    ...baseTypography.title,
+    color: colors.textPrimary,
+  },
+  subtitle: {
+    ...baseTypography.subtitle,
+    color: colors.textPrimary,
+  },
+  body: {
+    ...baseTypography.body,
+    color: colors.textSecondary,
+  },
+  caption: {
+    ...baseTypography.caption,
+    color: colors.textSecondary,
+  },
+});
+
+
+export const palette = colorSchemes.dark;
+export const typography = getTypography(colorSchemes.dark);
 
 export const shadows = Platform.select({
   ios: {

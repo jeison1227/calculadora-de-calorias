@@ -1,10 +1,12 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { FadeInView } from '@/components/ui/fade-in-view';
 import { Header } from '@/components/ui/header';
-import { palette, spacing, typography } from '@/constants/design-system';
+import { spacing } from '@/constants/design-system';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
 const recipes = [
   { name: 'Bowl de pollo con arroz integral', detail: '520 kcal · 38g proteína · 62g carbohidratos' },
@@ -13,6 +15,9 @@ const recipes = [
 ];
 
 export default function RecetasScreen() {
+  const { colors, typography } = useAppTheme();
+  const styles = useMemo(() => createStyles(typography), [typography]);
+
   return (
     <FadeInView style={styles.screen}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -21,7 +26,7 @@ export default function RecetasScreen() {
         <View style={styles.list}>
           {recipes.map(recipe => (
             <Card key={recipe.name}>
-              <View style={styles.row}><MaterialCommunityIcons name="food-apple" size={16} color={palette.primary} /><Text style={styles.recipeTitle}>{recipe.name}</Text></View>
+              <View style={styles.row}><MaterialCommunityIcons name="food-apple" size={16} color={colors.primary} /><Text style={styles.recipeTitle}>{recipe.name}</Text></View>
               <Text style={styles.recipeDetail}>{recipe.detail}</Text>
             </Card>
           ))}
@@ -31,8 +36,8 @@ export default function RecetasScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: palette.background },
+const createStyles = (typography: any) => StyleSheet.create({
+  screen: { flex: 1 },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: spacing.xl },
   list: { gap: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },

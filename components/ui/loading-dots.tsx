@@ -2,13 +2,14 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 
-import { palette, typography } from '@/constants/design-system';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
 type LoadingDotsProps = {
   label?: string;
 };
 
 export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps) {
+  const { colors, typography } = useAppTheme();
   const spin = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0.6)).current;
 
@@ -38,23 +39,14 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
   return (
     <View style={styles.container}>
       <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-        <MaterialCommunityIcons name="food-apple" size={20} color={palette.primary} />
+        <MaterialCommunityIcons name="food-apple" size={20} color={colors.primary} />
       </Animated.View>
       <View style={styles.dotsRow}>
         {[0, 1, 2].map(index => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.dot,
-              {
-                opacity: pulse,
-                transform: [{ scale: pulse }],
-              },
-            ]}
-          />
+          <Animated.View key={index} style={[styles.dot, { opacity: pulse, transform: [{ scale: pulse }], backgroundColor: colors.primary }]} />
         ))}
       </View>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[typography.caption, { color: colors.textPrimary, fontWeight: '700' }]}>{label}</Text>
     </View>
   );
 }
@@ -73,11 +65,5 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 999,
-    backgroundColor: palette.primary,
-  },
-  label: {
-    ...typography.caption,
-    color: palette.textPrimary,
-    fontWeight: '700',
   },
 });

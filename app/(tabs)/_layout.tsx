@@ -3,9 +3,12 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { palette, spacing } from '@/constants/design-system';
+import { spacing } from '@/constants/design-system';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
 export default function TabLayout() {
+  const { colors } = useAppTheme();
+
   return (
     <Tabs
       screenOptions={{
@@ -17,8 +20,8 @@ export default function TabLayout() {
           fontWeight: '700',
           marginTop: 2,
         },
-        tabBarActiveTintColor: palette.primary,
-        tabBarInactiveTintColor: '#6F83AE',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
           position: 'absolute',
           height: 76,
@@ -26,9 +29,9 @@ export default function TabLayout() {
           paddingTop: spacing.sm,
           marginHorizontal: spacing.md,
           marginBottom: spacing.sm,
-          backgroundColor: palette.surface,
+          backgroundColor: colors.surface,
           borderTopWidth: 1,
-          borderColor: palette.border,
+          borderColor: colors.border,
           borderRadius: 22,
         },
       }}>

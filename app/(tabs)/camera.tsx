@@ -12,44 +12,27 @@ import { Card } from '@/components/ui/card';
 import { FadeInView } from '@/components/ui/fade-in-view';
 import { Header } from '@/components/ui/header';
 import { LoadingDots } from '@/components/ui/loading-dots';
-import { palette, spacing, typography } from '@/constants/design-system';
+import { spacing } from '@/constants/design-system';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
-type DetectedFood = {
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-};
-
+type DetectedFood = { name: string; calories: number; protein: number; carbs: number; fat: number };
 const MEAL_HISTORY_KEY = 'mealHistory';
 const toNumber = (value: unknown) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 
-const parseFoodsFromText = (rawText: string): DetectedFood[] =>
-  rawText
-    .split('\n')
-    .map(line => line.trim())
-    .filter(Boolean)
-    .map(line => {
-      const cleaned = line.replace(/^[-•*]\s*/, '');
-      const nameMatch = cleaned.match(/^[^:|-]+/);
-      const caloriesMatch = cleaned.match(/(\d+(?:[.,]\d+)?)\s*kcal/i);
-      const proteinMatch = cleaned.match(/(?:prote[ií]na|protein|p)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
-      const carbsMatch = cleaned.match(/(?:carbohidratos|carbs?|c)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
-      const fatMatch = cleaned.match(/(?:grasas?|fat|g)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
-
-      if (!nameMatch || !caloriesMatch) return null;
-      return {
-        name: nameMatch[0].trim(),
-        calories: toNumber(caloriesMatch[1]?.replace(',', '.')),
-        protein: toNumber(proteinMatch?.[1]?.replace(',', '.')),
-        carbs: toNumber(carbsMatch?.[1]?.replace(',', '.')),
-        fat: toNumber(fatMatch?.[1]?.replace(',', '.')),
-      };
-    })
-    .filter((food): food is DetectedFood => Boolean(food));
+const parseFoodsFromText = (rawText: string): DetectedFood[] => rawText.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+  const cleaned = line.replace(/^[-•*]\s*/, '');
+  const nameMatch = cleaned.match(/^[^:|-]+/);
+  const caloriesMatch = cleaned.match(/(\d+(?:[.,]\d+)?)\s*kcal/i);
+  const proteinMatch = cleaned.match(/(?:prote[ií]na|protein|p)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+  const carbsMatch = cleaned.match(/(?:carbohidratos|carbs?|c)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+  const fatMatch = cleaned.match(/(?:grasas?|fat|g)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+  if (!nameMatch || !caloriesMatch) return null;
+  return { name: nameMatch[0].trim(), calories: toNumber(caloriesMatch[1]?.replace(',', '.')), protein: toNumber(proteinMatch?.[1]?.replace(',', '.')), carbs: toNumber(carbsMatch?.[1]?.replace(',', '.')), fat: toNumber(fatMatch?.[1]?.replace(',', '.')) };
+}).filter((food): food is DetectedFood => Boolean(food));
 
 export default function CameraScreen() {
+  const { colors, typography } = useAppTheme();
+  const styles = useMemo(() => createStyles(colors, typography), [colors, typography]);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<any>(null);
   const [loading, setLoading] = useState(false);
@@ -58,22 +41,9 @@ export default function CameraScreen() {
   const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
   const [foods, setFoods] = useState<DetectedFood[]>([]);
 
-  const totals = useMemo(
-    () => foods.reduce((acc, food) => ({ calories: acc.calories + food.calories, protein: acc.protein + food.protein, carbs: acc.carbs + food.carbs, fat: acc.fat + food.fat }), { calories: 0, protein: 0, carbs: 0, fat: 0 }),
-    [foods]
-  );
+  const totals = useMemo(() => foods.reduce((acc, food) => ({ calories: acc.calories + food.calories, protein: acc.protein + food.protein, carbs: acc.carbs + food.carbs, fat: acc.fat + food.fat }), { calories: 0, protein: 0, carbs: 0, fat: 0 }), [foods]);
 
-  if (!permission?.granted) {
-    return (
-      <FadeInView style={styles.permissionContainer}>
-        <Card style={styles.permissionCard}>
-          <Text style={styles.permissionTitle}>Activa la cámara</Text>
-          <Text style={styles.permissionBody}>Necesitamos acceso para analizar tu plato y estimar calorías + macros.</Text>
-          <AppButton title="Dar permiso" onPress={requestPermission} />
-        </Card>
-      </FadeInView>
-    );
-  }
+  if (!permission?.granted) return <FadeInView style={styles.permissionContainer}><Card style={styles.permissionCard}><Text style={styles.permissionTitle}>Activa la cámara</Text><Text style={styles.permissionBody}>Necesitamos acceso para analizar tu plato y estimar calorías + macros.</Text><AppButton title="Dar permiso" onPress={requestPermission} /></Card></FadeInView>;
 
   const saveMealToHistory = async () => {
     if (!foods.length) return;
@@ -88,32 +58,20 @@ export default function CameraScreen() {
     } catch (error) {
       console.log('❌ Error guardando historial:', error);
       Alert.alert('Error', 'No se pudo guardar la comida en el historial.');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const tomarFoto = async () => {
     if (!cameraRef.current) return;
-    setLoading(true);
-    setResultado(null);
-    setFoods([]);
-
+    setLoading(true); setResultado(null); setFoods([]);
     const foto = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.7 });
     setCapturedImageUri(foto.uri);
     const reducida = await ImageManipulator.manipulateAsync(foto.uri, [{ resize: { width: 800 } }], { base64: true });
-
     try {
-      const res = await fetch('http://192.168.1.13:3001/ia/analizar-imagen', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: `data:image/jpeg;base64,${reducida.base64}` }),
-      });
+      const res = await fetch('http://192.168.1.13:3001/ia/analizar-imagen', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageBase64: `data:image/jpeg;base64,${reducida.base64}` }) });
       const data = await res.json();
       const summary = data.respuestaIA ?? data.resumen ?? null;
-      const apiFoods = Array.isArray(data.alimentos)
-        ? data.alimentos.map((item: any) => ({ name: item.nombre ?? item.name ?? 'Alimento detectado', calories: toNumber(item.calorias ?? item.calories), protein: toNumber(item.proteina ?? item.protein), carbs: toNumber(item.carbohidratos ?? item.carbs), fat: toNumber(item.grasa ?? item.fat) }))
-        : [];
+      const apiFoods = Array.isArray(data.alimentos) ? data.alimentos.map((item: any) => ({ name: item.nombre ?? item.name ?? 'Alimento detectado', calories: toNumber(item.calorias ?? item.calories), protein: toNumber(item.proteina ?? item.protein), carbs: toNumber(item.carbohidratos ?? item.carbs), fat: toNumber(item.grasa ?? item.fat) })) : [];
       const parsedFromText = typeof summary === 'string' ? parseFoodsFromText(summary) : [];
       setFoods(apiFoods.length ? apiFoods : parsedFromText);
       setResultado(summary || 'Análisis completado.');
@@ -121,9 +79,7 @@ export default function CameraScreen() {
     } catch (error) {
       console.log('❌ Error IA imagen:', error);
       Speech.speak('Ocurrió un error analizando la imagen', { language: 'es' });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   return (
@@ -131,7 +87,6 @@ export default function CameraScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Header title="Escaneo inteligente" subtitle="Fotografía tu plato y recibe un análisis nutricional instantáneo." />
         <View style={styles.cameraWrap}><CameraView ref={cameraRef} style={styles.camera} /></View>
-
         <Card>
           <Text style={styles.sectionTitle}>Análisis por foto</Text>
           <Text style={styles.sectionBody}>Usa buena iluminación para mayor precisión.</Text>
@@ -139,51 +94,31 @@ export default function CameraScreen() {
           <AppButton title="Tomar foto" onPress={tomarFoto} loading={loading} />
           <AppButton title="Volver" variant="ghost" onPress={() => router.back()} />
         </Card>
-
         {capturedImageUri && <Card><Text style={styles.sectionTitle}>Vista previa</Text><Image source={{ uri: capturedImageUri }} style={styles.previewImage} /></Card>}
-
-        {!!foods.length && (
-          <Card style={styles.foodListCard}>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalText}>Total: {Math.round(totals.calories)} kcal</Text>
-              <Text style={styles.totalSubText}>P {Math.round(totals.protein)}g · C {Math.round(totals.carbs)}g · G {Math.round(totals.fat)}g</Text>
-            </View>
-            {foods.map((food, index) => (
-              <View key={`${food.name}-${index}`} style={styles.foodRow}>
-                <MaterialCommunityIcons name="food-apple" size={16} color={palette.primary} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={styles.metric}>🔥 {Math.round(food.calories)} · 💪 {Math.round(food.protein)}g · 🍞 {Math.round(food.carbs)}g · 🥑 {Math.round(food.fat)}g</Text>
-                </View>
-              </View>
-            ))}
-            <AppButton title="Guardar comida en historial" onPress={saveMealToHistory} loading={saving} />
-          </Card>
-        )}
-
+        {!!foods.length && <Card style={styles.foodListCard}><View style={styles.totalRow}><Text style={styles.totalText}>Total: {Math.round(totals.calories)} kcal</Text><Text style={styles.totalSubText}>P {Math.round(totals.protein)}g · C {Math.round(totals.carbs)}g · G {Math.round(totals.fat)}g</Text></View>{foods.map((food, index) => <View key={`${food.name}-${index}`} style={styles.foodRow}><MaterialCommunityIcons name="food-apple" size={16} color={colors.primary} /><View style={{ flex: 1 }}><Text style={styles.foodName}>{food.name}</Text><Text style={styles.metric}>🔥 {Math.round(food.calories)} · 💪 {Math.round(food.protein)}g · 🍞 {Math.round(food.carbs)}g · 🥑 {Math.round(food.fat)}g</Text></View></View>)}<AppButton title="Guardar comida en historial" onPress={saveMealToHistory} loading={saving} /></Card>}
         {resultado && <Card><Text style={styles.sectionTitle}>Resultado IA</Text><Text style={styles.result}>{resultado}</Text></Card>}
       </ScrollView>
     </FadeInView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: palette.background },
+const createStyles = (colors: any, typography: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 120 },
-  cameraWrap: { height: 260, overflow: 'hidden', borderRadius: 22, borderWidth: 1, borderColor: palette.border },
+  cameraWrap: { height: 260, overflow: 'hidden', borderRadius: 22, borderWidth: 1, borderColor: colors.border },
   camera: { flex: 1 },
   sectionTitle: { ...typography.subtitle },
   sectionBody: { ...typography.body },
   previewImage: { width: '100%', height: 220, borderRadius: 14, marginTop: spacing.sm },
   foodListCard: { gap: spacing.sm },
-  foodRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', backgroundColor: '#142441', borderRadius: 12, padding: spacing.sm },
-  foodName: { ...typography.body, color: palette.textPrimary },
+  foodRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', backgroundColor: colors.backgroundSoft, borderRadius: 12, padding: spacing.sm },
+  foodName: { ...typography.body, color: colors.textPrimary },
   metric: { ...typography.caption },
   totalRow: { gap: 2 },
-  totalText: { ...typography.body, color: palette.textPrimary },
+  totalText: { ...typography.body, color: colors.textPrimary },
   totalSubText: { ...typography.caption },
-  result: { ...typography.body, color: palette.textPrimary, fontWeight: '600' },
-  permissionContainer: { flex: 1, justifyContent: 'center', padding: spacing.md, backgroundColor: palette.background },
+  result: { ...typography.body, color: colors.textPrimary, fontWeight: '600' },
+  permissionContainer: { flex: 1, justifyContent: 'center', padding: spacing.md, backgroundColor: colors.background },
   permissionCard: { gap: spacing.md },
   permissionTitle: { ...typography.subtitle },
   permissionBody: { ...typography.body },

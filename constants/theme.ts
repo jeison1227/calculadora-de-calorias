@@ -1,20 +1,20 @@
 import { Platform } from 'react-native';
 
-import { theme } from '@/constants/design-system';
+import { colorSchemes } from '@/constants/design-system';
 
 export const Colors = {
   light: {
-    text: theme.colors.textPrimary,
-    background: theme.colors.background,
-    tint: theme.colors.primary,
-    icon: '#64748B',
+    text: colorSchemes.light.textPrimary,
+    background: colorSchemes.light.background,
+    tint: colorSchemes.light.primary,
+    icon: '#475569',
     tabIconDefault: '#64748B',
-    tabIconSelected: theme.colors.primary,
+    tabIconSelected: colorSchemes.light.primary,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: '#FFFFFF',
+    text: colorSchemes.dark.textPrimary,
+    background: colorSchemes.dark.background,
+    tint: colorSchemes.dark.primary,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: '#FFFFFF',
