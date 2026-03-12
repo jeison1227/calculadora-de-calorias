@@ -60,24 +60,47 @@ app.post("/ia/analizar-imagen", async (req, res) => {
   }
 
   try {
+    const systemPrompt = `Eres un nutricionista experto en análisis visual de platos.
+Identifica múltiples alimentos visibles en una foto y estima sus macros por porción observada.`;
+
+    const userPrompt = `Analiza esta imagen de comida.
+
+Requisitos:
+- Detecta TODOS los alimentos visibles (si hay varios, inclúyelos todos).
+- Devuelve una lista con nombre y estimación por alimento.
+- Incluye calorías (kcal), proteína, carbohidratos y grasa en gramos por cada alimento.
+- Si no estás seguro del nombre exacto, usa un nombre genérico razonable (ej: "ensalada mixta").
+
+Responde EXCLUSIVAMENTE en JSON válido con este formato exacto:
+{
+  "alimentos": [
+    {
+      "nombre": "string",
+      "calorias": number,
+      "proteina": number,
+      "carbohidratos": number,
+      "grasa": number
+    }
+  ],
+  "resumen": "string"
+}
+
+No agregues markdown ni texto fuera del JSON.`;
+
     const completion = await client.chat.completions.create({
       model: "meta-llama/llama-4-scout-17b-16e-instruct", // MODELO ACTUAL
+      response_format: { type: "json_object" },
       messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: `
-Analiza esta imagen de comida.
-
-Indica:
-- Qué alimento es
-- Una estimación aproximada de calorías
-- Aproximación de proteínas, carbohidratos y grasas
-
-Responde en español.
-              `,
+              text: userPrompt,
             },
             {
               type: "image_url",
@@ -92,11 +115,49 @@ Responde en español.
       max_completion_tokens: 800,
     });
 
-    const respuesta =
-      completion.choices[0]?.message?.content ||
-      "No pude identificar el alimento.";
+    const rawResponse = completion.choices[0]?.message?.content;
 
-    res.json({ respuestaIA: respuesta });
+    if (!rawResponse) {
+      return res.json({
+        alimentos: [],
+        resumen: "No pude identificar alimentos en la imagen.",
+      });
+    }
+
+    let parsed;
+    try {
+      parsed = JSON.parse(rawResponse);
+    } catch (parseError) {
+      console.error("❌ Error parseando JSON de IA:", parseError);
+      return res.json({
+        alimentos: [],
+        resumen: "No pude interpretar correctamente el análisis de la imagen.",
+        respuestaIA: rawResponse,
+      });
+    }
+
+    const alimentos = Array.isArray(parsed.alimentos)
+      ? parsed.alimentos.map((item) => ({
+          nombre: item?.nombre || "Alimento detectado",
+          calorias: Number(item?.calorias) || 0,
+          proteina: Number(item?.proteina) || 0,
+          carbohidratos: Number(item?.carbohidratos) || 0,
+          grasa: Number(item?.grasa) || 0,
+        }))
+      : [];
+
+    const resumen =
+      typeof parsed.resumen === "string" && parsed.resumen.trim()
+        ? parsed.resumen
+        : alimentos.length
+          ? `Se detectaron ${alimentos.length} alimentos.`
+          : "No se detectaron alimentos con suficiente confianza.";
+
+    res.json({
+      alimentos,
+      resumen,
+      respuestaIA: resumen,
+    });
 
   } catch (error) {
     console.error("❌ ERROR COMPLETO GROQ:", error);

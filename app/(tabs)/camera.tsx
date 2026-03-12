@@ -143,22 +143,28 @@ export default function CameraScreen() {
         {capturedImageUri && <Card><Text style={styles.sectionTitle}>Vista previa</Text><Image source={{ uri: capturedImageUri }} style={styles.previewImage} /></Card>}
 
         {!!foods.length && (
-          <Card style={styles.foodListCard}>
-            <View style={styles.totalRow}>
-              <Text style={styles.totalText}>Total: {Math.round(totals.calories)} kcal</Text>
-              <Text style={styles.totalSubText}>P {Math.round(totals.protein)}g · C {Math.round(totals.carbs)}g · G {Math.round(totals.fat)}g</Text>
-            </View>
-            {foods.map((food, index) => (
-              <View key={`${food.name}-${index}`} style={styles.foodRow}>
-                <MaterialCommunityIcons name="food-apple" size={16} color={palette.primary} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={styles.metric}>🔥 {Math.round(food.calories)} · 💪 {Math.round(food.protein)}g · 🍞 {Math.round(food.carbs)}g · 🥑 {Math.round(food.fat)}g</Text>
-                </View>
+          <>
+            <Card style={styles.foodListCard}>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalText}>Total: {Math.round(totals.calories)} kcal</Text>
+                <Text style={styles.totalSubText}>P {Math.round(totals.protein)}g · C {Math.round(totals.carbs)}g · G {Math.round(totals.fat)}g</Text>
               </View>
+              <AppButton title="Guardar comida en historial" onPress={saveMealToHistory} loading={saving} />
+            </Card>
+
+            {foods.map((food, index) => (
+              <Card key={`${food.name}-${index}`} style={styles.foodItemCard}>
+                <View style={styles.foodRow}>
+                  <MaterialCommunityIcons name="food-apple" size={16} color={palette.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.foodName}>{food.name}</Text>
+                    <Text style={styles.metric}>🔥 {Math.round(food.calories)} kcal</Text>
+                    <Text style={styles.metric}>💪 {Math.round(food.protein)}g · 🍞 {Math.round(food.carbs)}g · 🥑 {Math.round(food.fat)}g</Text>
+                  </View>
+                </View>
+              </Card>
             ))}
-            <AppButton title="Guardar comida en historial" onPress={saveMealToHistory} loading={saving} />
-          </Card>
+          </>
         )}
 
         {resultado && <Card><Text style={styles.sectionTitle}>Resultado IA</Text><Text style={styles.result}>{resultado}</Text></Card>}
@@ -176,7 +182,8 @@ const styles = StyleSheet.create({
   sectionBody: { ...typography.body },
   previewImage: { width: '100%', height: 220, borderRadius: 14, marginTop: spacing.sm },
   foodListCard: { gap: spacing.sm },
-  foodRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center', backgroundColor: '#142441', borderRadius: 12, padding: spacing.sm },
+  foodItemCard: { gap: spacing.xs },
+  foodRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
   foodName: { ...typography.body, color: palette.textPrimary },
   metric: { ...typography.caption },
   totalRow: { gap: 2 },
