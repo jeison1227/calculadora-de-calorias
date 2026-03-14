@@ -1,188 +1,116 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
-import { Card } from '@/components/ui/card';
-import { CircularCalorieProgress } from '@/components/ui/circular-calorie-progress';
 import { CalorieProgress } from '@/components/ui/calorie-progress';
+import { Card } from '@/components/ui/card';
 import { FadeInView } from '@/components/ui/fade-in-view';
+import { Header } from '@/components/ui/header';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
-import { deleteMealFromHistory, getMealHistory, MealHistoryItem } from '@/libreria/meal-history';
-
-const dailyCalorieTarget = 2000;
-
-const formatDay = (dateIso: string) =>
-  new Date(dateIso).toLocaleDateString('es-ES', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'short',
-  });
+import { generateMealPlan } from '@/libreria/ai-planner';
+import { getMealHistory, MealHistoryItem } from '@/libreria/meal-history';
+import { getTodayTotals, getWeeklyCalories } from '@/libreria/nutrition-analytics';
+import { defaultUserProfile, getUserProfile, UserProfile } from '@/libreria/user-profile';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const [history, setHistory] = useState<MealHistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile>(defaultUserProfile);
 
-  const loadHistory = useCallback(async () => {
-    setLoading(true);
-    try {
-      const meals = await getMealHistory();
-      setHistory(meals);
-    } finally {
-      setLoading(false);
-    }
+  const loadData = useCallback(async () => {
+    const [meals, user] = await Promise.all([getMealHistory(), getUserProfile()]);
+    setHistory(meals);
+    setProfile(user);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadHistory();
-    }, [loadHistory])
+      loadData();
+    }, [loadData])
   );
 
-  const dailyTotals = useMemo(() => {
-    if (!history.length) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
-
-    const today = new Date().toISOString().slice(0, 10);
-    return history
-      .filter(meal => meal.createdAt.slice(0, 10) === today)
-      .reduce(
-        (acc, meal) => ({
-          calories: acc.calories + meal.totals.calories,
-          protein: acc.protein + meal.totals.protein,
-          carbs: acc.carbs + meal.totals.carbs,
-          fat: acc.fat + meal.totals.fat,
-        }),
-        { calories: 0, protein: 0, carbs: 0, fat: 0 }
-      );
-  }, [history]);
-
-  const groupedByDay = useMemo(() => {
-    const grouped = history.reduce<Record<string, MealHistoryItem[]>>((acc, meal) => {
-      const key = meal.createdAt.slice(0, 10);
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(meal);
-      return acc;
-    }, {});
-
-    return Object.entries(grouped)
-      .sort(([a], [b]) => (a > b ? -1 : 1))
-      .map(([dayKey, meals]) => ({
-        dayKey,
-        title: formatDay(meals[0]?.createdAt ?? dayKey),
-        meals,
-      }));
-  }, [history]);
-
-  const handleDelete = (meal: MealHistoryItem) => {
-    Alert.alert('Eliminar comida', '¿Quieres eliminar esta comida del historial?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          setDeletingId(meal.id);
-          try {
-            const next = await deleteMealFromHistory(meal.id);
-            setHistory(next);
-          } finally {
-            setDeletingId(null);
-          }
-        },
-      },
-    ]);
-  };
-
-  const remaining = dailyCalorieTarget - dailyTotals.calories;
+  const todayTotals = useMemo(() => getTodayTotals(history), [history]);
+  const weeklyCalories = useMemo(() => getWeeklyCalories(history), [history]);
+  const weeklyPeak = Math.max(1, ...weeklyCalories.map(item => item.calories));
+  const plan = useMemo(() => generateMealPlan(profile), [profile]);
 
   return (
     <FadeInView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.overline}>Hoy</Text>
-            <Text style={styles.title}>Historial de comidas</Text>
-          </View>
-          <View style={styles.avatar}>
-            <MaterialCommunityIcons name="history" size={20} color={palette.primary} />
-          </View>
-        </View>
+        <Header title="AI Nutrition Assistant" subtitle="Tu panel profesional de calorías, macros, planificación y progreso semanal." />
 
-        <Card style={styles.mainCard}>
-          <Text style={styles.sectionLabel}>Calorías del día</Text>
-          <View style={styles.progressWrap}>
-            <CircularCalorieProgress consumed={Math.round(dailyTotals.calories)} target={dailyCalorieTarget} />
-            <CalorieProgress consumed={Math.round(dailyTotals.calories)} target={dailyCalorieTarget} />
-            <View style={styles.progressLegend}>
-              <View style={styles.legendPill}>
-                <Text style={styles.legendValue}>{Math.round(dailyTotals.calories)} kcal</Text>
-                <Text style={styles.legendLabel}>Consumidas</Text>
-              </View>
-              <View style={styles.legendPill}>
-                <Text style={styles.legendValue}>{Math.max(0, Math.round(remaining))} kcal</Text>
-                <Text style={styles.legendLabel}>Restantes</Text>
-              </View>
+        <Card style={styles.dashboardCard}>
+          <View style={styles.titleRow}>
+            <Text style={styles.cardTitle}>Dashboard diario</Text>
+            <View style={styles.goalBadge}>
+              <MaterialCommunityIcons name="target" size={14} color={palette.primary} />
+              <Text style={styles.goalBadgeText}>{profile.dailyCalorieGoal} kcal</Text>
             </View>
+          </View>
+
+          <CalorieProgress consumed={Math.round(todayTotals.calories)} target={profile.dailyCalorieGoal} />
+
+          <View style={styles.macroGrid}>
+            {[
+              { label: 'Protein', value: `${Math.round(todayTotals.protein)}g`, icon: 'food-drumstick-outline' as const },
+              { label: 'Carbs', value: `${Math.round(todayTotals.carbs)}g`, icon: 'bread-slice-outline' as const },
+              { label: 'Fat', value: `${Math.round(todayTotals.fat)}g`, icon: 'peanut-outline' as const },
+            ].map(item => (
+              <View key={item.label} style={styles.macroTile}>
+                <MaterialCommunityIcons name={item.icon} size={16} color={palette.primary} />
+                <Text style={styles.macroValue}>{item.value}</Text>
+                <Text style={styles.macroLabel}>{item.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.actionsRow}>
+            <View style={{ flex: 1 }}><AppButton title="Scan Food" onPress={() => router.push('/camera')} /></View>
+            <View style={{ flex: 1 }}><AppButton title="Recipes" variant="ghost" onPress={() => router.push('/recipes')} /></View>
           </View>
         </Card>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Macros de hoy</Text>
-        </View>
-        <View style={styles.macrosRow}>
-          <Card style={styles.macroCard}>
-            <Text style={styles.macroValue}>{Math.round(dailyTotals.protein)}g</Text>
-            <Text style={styles.macroLabel}>Proteína</Text>
-          </Card>
-          <Card style={styles.macroCard}>
-            <Text style={styles.macroValue}>{Math.round(dailyTotals.carbs)}g</Text>
-            <Text style={styles.macroLabel}>Carbohidratos</Text>
-          </Card>
-          <Card style={styles.macroCard}>
-            <Text style={styles.macroValue}>{Math.round(dailyTotals.fat)}g</Text>
-            <Text style={styles.macroLabel}>Grasa</Text>
-          </Card>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Comidas por día</Text>
-        </View>
-
-        {!loading && !groupedByDay.length && (
-          <Card>
-            <Text style={styles.emptyText}>Aún no hay comidas guardadas. Analiza una comida y guárdala para verla aquí.</Text>
-          </Card>
-        )}
-
-        {groupedByDay.map(group => (
-          <View key={group.dayKey} style={styles.dayGroup}>
-            <Text style={styles.dayTitle}>{group.title}</Text>
-            {group.meals.map(meal => (
-              <Card key={meal.id} style={styles.mealCard}>
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealCalories}>{Math.round(meal.totals.calories)} kcal</Text>
-                  <AppButton
-                    title="Eliminar"
-                    variant="ghost"
-                    onPress={() => handleDelete(meal)}
-                    loading={deletingId === meal.id}
+        <Card>
+          <View style={styles.titleRow}>
+            <Text style={styles.cardTitle}>Estadísticas semanales</Text>
+            <Text style={styles.subtle}>tracking</Text>
+          </View>
+          <View style={styles.weeklyBars}>
+            {weeklyCalories.map(item => (
+              <View key={item.dateKey} style={styles.barColumn}>
+                <Text style={styles.barValue}>{item.calories}</Text>
+                <View style={styles.barTrack}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      {
+                        height: `${Math.max(8, (item.calories / weeklyPeak) * 100)}%`,
+                        backgroundColor: item.calories >= profile.dailyCalorieGoal ? palette.primary : '#395C95',
+                      },
+                    ]}
                   />
                 </View>
-                <Text style={styles.mealSubtitle}>
-                  P {Math.round(meal.totals.protein)}g · C {Math.round(meal.totals.carbs)}g · G {Math.round(meal.totals.fat)}g
-                </Text>
-                {!!meal.foods?.length && (
-                  <View style={styles.foodList}>
-                    {meal.foods.map((food, index) => (
-                      <Text key={`${meal.id}-${index}`} style={styles.foodItem}>• {food.name}</Text>
-                    ))}
-                  </View>
-                )}
-              </Card>
+                <Text style={styles.barLabel}>{item.day}</Text>
+              </View>
             ))}
           </View>
-        ))}
+        </Card>
+
+        <Card>
+          <Text style={styles.cardTitle}>AI Diet Planner</Text>
+          <Text style={styles.planHint}>{plan.coachingTip}</Text>
+          {plan.meals.map(meal => (
+            <View key={meal.name} style={styles.mealPlanRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mealPlanTitle}>{meal.name}</Text>
+                <Text style={styles.mealPlanFoods}>{meal.foods.join(' · ')}</Text>
+              </View>
+              <Text style={styles.mealPlanCalories}>{meal.calories} kcal</Text>
+            </View>
+          ))}
+        </Card>
       </ScrollView>
     </FadeInView>
   );
@@ -190,48 +118,64 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: palette.background },
-  content: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  overline: { ...typography.caption, color: palette.primary, textTransform: 'uppercase' },
-  title: { ...typography.subtitle, fontSize: 28 },
-  avatar: {
-    width: 44,
-    height: 44,
+  content: { padding: spacing.md, gap: spacing.md, paddingBottom: 120 },
+  dashboardCard: { backgroundColor: '#101B33' },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardTitle: { ...typography.subtitle, fontSize: 20 },
+  goalBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: palette.border,
     borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: '#285E42',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#10211A',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    backgroundColor: '#152540',
   },
-  mainCard: { backgroundColor: '#0D172D', gap: spacing.md },
-  sectionLabel: { ...typography.body, color: '#AFBFDF' },
-  progressWrap: { alignItems: 'center', gap: spacing.md },
-  progressLegend: { width: '100%', flexDirection: 'row', gap: spacing.sm },
-  legendPill: {
+  goalBadgeText: { ...typography.caption, color: palette.primary },
+  macroGrid: { flexDirection: 'row', gap: spacing.sm },
+  macroTile: {
     flex: 1,
-    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#2A416D',
-    padding: spacing.sm,
+    borderColor: palette.border,
+    backgroundColor: palette.surfaceElevated,
+    borderRadius: radius.md,
     alignItems: 'center',
-    backgroundColor: '#162746',
+    padding: spacing.sm,
+    gap: 4,
   },
-  legendValue: { ...typography.body, color: palette.textPrimary, fontWeight: '700' },
-  legendLabel: { ...typography.caption, color: '#8AA0CB' },
-  sectionHeader: { marginTop: spacing.xs },
-  sectionTitle: { ...typography.subtitle, fontSize: 20 },
-  macrosRow: { flexDirection: 'row', gap: spacing.sm },
-  macroCard: { flex: 1, alignItems: 'center', backgroundColor: '#111F3D' },
-  macroValue: { ...typography.subtitle, fontSize: 20 },
+  macroValue: { ...typography.body, color: palette.textPrimary, fontWeight: '800' },
   macroLabel: { ...typography.caption },
-  dayGroup: { gap: spacing.xs },
-  dayTitle: { ...typography.subtitle, textTransform: 'capitalize' },
-  mealCard: { backgroundColor: '#101E39', gap: spacing.xs },
-  mealHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  mealCalories: { ...typography.body, color: palette.primary, fontWeight: '700' },
-  mealSubtitle: { ...typography.caption, color: '#90A8D5' },
-  foodList: { gap: 2 },
-  foodItem: { ...typography.caption, color: palette.textPrimary },
-  emptyText: { ...typography.body, color: palette.textPrimary },
+  actionsRow: { flexDirection: 'row', gap: spacing.sm },
+  subtle: { ...typography.caption, textTransform: 'uppercase' },
+  weeklyBars: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: spacing.xs },
+  barColumn: { flex: 1, alignItems: 'center', gap: 5 },
+  barValue: { ...typography.caption, fontSize: 10 },
+  barTrack: {
+    width: '100%',
+    height: 110,
+    borderRadius: radius.sm,
+    backgroundColor: '#0B152B',
+    borderWidth: 1,
+    borderColor: palette.border,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  barFill: { width: '100%', borderTopLeftRadius: radius.sm, borderTopRightRadius: radius.sm },
+  barLabel: { ...typography.caption, color: palette.textPrimary },
+  planHint: { ...typography.body },
+  mealPlanRow: {
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    backgroundColor: '#12203B',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  mealPlanTitle: { ...typography.body, color: palette.textPrimary, fontWeight: '700' },
+  mealPlanFoods: { ...typography.caption },
+  mealPlanCalories: { ...typography.body, color: palette.primary, fontWeight: '800' },
 });
