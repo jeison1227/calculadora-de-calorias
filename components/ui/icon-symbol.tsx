@@ -21,6 +21,7 @@ const MAPPING = {
   'list.bullet.clipboard.fill': 'checklist',
   'camera.fill': 'photo-camera',
   'chart.line.uptrend.xyaxis': 'show-chart',
+  sparkles: 'auto-awesome',
 } as IconMapping;
 
 /**

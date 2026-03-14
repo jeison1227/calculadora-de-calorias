@@ -53,6 +53,15 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={20} name="camera.fill" color={color} />,
         }}
       />
+
+      <Tabs.Screen
+        name="ai"
+        options={{
+          title: 'Nutri IA',
+          tabBarIcon: ({ color }) => <IconSymbol size={20} name="sparkles" color={color} />,
+        }}
+      />
+
       <Tabs.Screen
         name="explore"
         options={{
