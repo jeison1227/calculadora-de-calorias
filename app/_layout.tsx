@@ -27,7 +27,12 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : appLightTheme}>
-      <Stack screenOptions={{ animation: 'fade', contentStyle: { backgroundColor: palette.background } }}>
+      <Stack
+        screenOptions={{
+          animation: 'slide_from_right',
+          animationDuration: 260,
+          contentStyle: { backgroundColor: palette.background },
+        }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>

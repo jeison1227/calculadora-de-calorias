@@ -20,8 +20,11 @@ export function AppButton({
 }: AppButtonProps) {
   const scale = useRef(new Animated.Value(1)).current;
   const glow = useRef(new Animated.Value(0)).current;
+  const lift = useRef(new Animated.Value(0)).current;
 
   const animatePress = (toValue: number) => {
+    const pressed = toValue < 1;
+
     Animated.parallel([
       Animated.spring(scale, {
         toValue,
@@ -30,17 +33,28 @@ export function AppButton({
         tension: 210,
       }),
       Animated.timing(glow, {
-        toValue: toValue < 1 ? 1 : 0,
-        duration: 160,
+        toValue: pressed ? 1 : 0,
+        duration: pressed ? 120 : 220,
         easing: Easing.out(Easing.quad),
         useNativeDriver: false,
+      }),
+      Animated.timing(lift, {
+        toValue: pressed ? 1 : 0,
+        duration: pressed ? 100 : 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
       }),
     ]).start();
   };
 
   const shadowOpacity = glow.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.1, 0.28],
+    outputRange: [0.1, 0.3],
+  });
+
+  const translateY = lift.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 2],
   });
 
   return (
@@ -48,7 +62,7 @@ export function AppButton({
       style={[
         styles.animationWrap,
         {
-          transform: [{ scale }],
+          transform: [{ scale }, { translateY }],
           shadowOpacity,
         },
       ]}>
@@ -59,7 +73,7 @@ export function AppButton({
           (pressed || disabled || loading) && styles.dimmed,
         ]}
         onPress={onPress}
-        onPressIn={() => animatePress(0.97)}
+        onPressIn={() => animatePress(0.96)}
         onPressOut={() => animatePress(1)}
         disabled={disabled || loading}>
         {loading ? (

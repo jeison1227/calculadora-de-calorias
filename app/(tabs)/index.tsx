@@ -6,6 +6,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
 import { CircularCalorieProgress } from '@/components/ui/circular-calorie-progress';
+import { CalorieProgress } from '@/components/ui/calorie-progress';
 import { FadeInView } from '@/components/ui/fade-in-view';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
 import { deleteMealFromHistory, getMealHistory, MealHistoryItem } from '@/libreria/meal-history';
@@ -112,6 +113,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionLabel}>Calorías del día</Text>
           <View style={styles.progressWrap}>
             <CircularCalorieProgress consumed={Math.round(dailyTotals.calories)} target={dailyCalorieTarget} />
+            <CalorieProgress consumed={Math.round(dailyTotals.calories)} target={dailyCalorieTarget} />
             <View style={styles.progressLegend}>
               <View style={styles.legendPill}>
                 <Text style={styles.legendValue}>{Math.round(dailyTotals.calories)} kcal</Text>
