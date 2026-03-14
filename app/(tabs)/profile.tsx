@@ -1,11 +1,20 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { Header } from '@/components/ui/header';
 import { AppInput } from '@/components/ui/input';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
+import {
+  ensureReminderPermission,
+  getReminderLabel,
+  getReminderSettings,
+  isReminderEnabled,
+  reminderTypes,
+  ReminderType,
+  updateReminder,
+} from '@/libreria/reminders';
 
 type ActivityLevel = {
   label: string;
@@ -27,12 +36,55 @@ export default function ProfileScreen() {
   const [weight, setWeight] = useState('');
   const [dailyCalorieGoal, setDailyCalorieGoal] = useState('2000');
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>(activityLevels[2]);
+  const [reminders, setReminders] = useState<Record<ReminderType, boolean>>({
+    breakfast: false,
+    lunch: false,
+    dinner: false,
+    hydration: false,
+  });
+  const [updatingReminder, setUpdatingReminder] = useState<ReminderType | null>(null);
 
   const completion = useMemo(() => {
     const fields = [age, height, weight, dailyCalorieGoal];
     const filled = fields.filter(Boolean).length;
     return Math.round((filled / fields.length) * 100);
   }, [age, height, weight, dailyCalorieGoal]);
+
+  useEffect(() => {
+    const loadReminderState = async () => {
+      const settings = await getReminderSettings();
+      setReminders({
+        breakfast: isReminderEnabled(settings.breakfast),
+        lunch: isReminderEnabled(settings.lunch),
+        dinner: isReminderEnabled(settings.dinner),
+        hydration: isReminderEnabled(settings.hydration),
+      });
+    };
+
+    loadReminderState();
+  }, []);
+
+  const onToggleReminder = async (type: ReminderType, enabled: boolean) => {
+    setUpdatingReminder(type);
+
+    try {
+      if (enabled) {
+        const granted = await ensureReminderPermission();
+        if (!granted) {
+          Alert.alert(
+            'Notificaciones no disponibles',
+            'No se pudo habilitar este recordatorio porque los permisos de notificación no están concedidos o la función no está disponible en esta compilación.'
+          );
+          return;
+        }
+      }
+
+      await updateReminder(type, enabled);
+      setReminders(prev => ({ ...prev, [type]: enabled }));
+    } finally {
+      setUpdatingReminder(null);
+    }
+  };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -112,6 +164,26 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </Card>
+
+      <Card>
+        <Text style={styles.sectionTitle}>Recordatorios</Text>
+        <Text style={styles.reminderCaption}>Activa notificaciones para comidas e hidratación durante el día.</Text>
+
+        <View style={styles.reminderList}>
+          {reminderTypes.map(reminder => (
+            <View key={reminder} style={styles.reminderRow}>
+              <Text style={styles.reminderLabel}>{getReminderLabel(reminder)}</Text>
+              <Switch
+                value={reminders[reminder]}
+                disabled={updatingReminder === reminder}
+                onValueChange={enabled => onToggleReminder(reminder, enabled)}
+                trackColor={{ false: '#31435D', true: '#2A7B56' }}
+                thumbColor={reminders[reminder] ? '#7FFFB8' : '#F3F4F6'}
+              />
+            </View>
+          ))}
+        </View>
+      </Card>
     </ScrollView>
   );
 }
@@ -170,5 +242,31 @@ const styles = StyleSheet.create({
   goalHintText: {
     ...typography.body,
     color: palette.textSecondary,
+  },
+  reminderCaption: {
+    ...typography.caption,
+    color: palette.textSecondary,
+    marginTop: 2,
+  },
+  reminderList: {
+    marginTop: spacing.sm,
+    gap: spacing.sm,
+  },
+  reminderRow: {
+    borderWidth: 1,
+    borderColor: palette.border,
+    borderRadius: radius.md,
+    backgroundColor: palette.backgroundSoft,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  reminderLabel: {
+    ...typography.body,
+    color: palette.textPrimary,
+    flex: 1,
+    marginRight: spacing.sm,
   },
 });
