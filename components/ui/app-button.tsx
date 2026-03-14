@@ -21,6 +21,7 @@ export function AppButton({
   const scale = useRef(new Animated.Value(1)).current;
   const glow = useRef(new Animated.Value(0)).current;
   const lift = useRef(new Animated.Value(0)).current;
+  const pressGlow = useRef(new Animated.Value(0)).current;
 
   const animatePress = (toValue: number) => {
     const pressed = toValue < 1;
@@ -44,6 +45,12 @@ export function AppButton({
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
+      Animated.timing(pressGlow, {
+        toValue: pressed ? 1 : 0,
+        duration: pressed ? 90 : 170,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }),
     ]).start();
   };
 
@@ -57,6 +64,11 @@ export function AppButton({
     outputRange: [0, 2],
   });
 
+  const borderGlow = pressGlow.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(125, 245, 164, 0.0)', 'rgba(125, 245, 164, 0.55)'],
+  });
+
   return (
     <Animated.View
       style={[
@@ -64,6 +76,7 @@ export function AppButton({
         {
           transform: [{ scale }, { translateY }],
           shadowOpacity,
+          borderColor: borderGlow,
         },
       ]}>
       <Pressable
@@ -93,6 +106,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
     borderRadius: radius.md,
+    borderWidth: 1,
   },
   base: {
     borderRadius: radius.md,

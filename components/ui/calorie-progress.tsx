@@ -26,14 +26,21 @@ export function CalorieProgress({ consumed, target }: CalorieProgressProps) {
   }, [progress, widthAnim]);
 
   useEffect(() => {
-    Animated.loop(
+    shimmer.setValue(0);
+    const shimmerLoop = Animated.loop(
       Animated.timing(shimmer, {
         toValue: 1,
         duration: 1400,
         easing: Easing.linear,
         useNativeDriver: true,
       })
-    ).start();
+    );
+
+    shimmerLoop.start();
+
+    return () => {
+      shimmerLoop.stop();
+    };
   }, [shimmer]);
 
   const width = widthAnim.interpolate({

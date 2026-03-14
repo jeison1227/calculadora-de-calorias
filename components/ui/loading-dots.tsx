@@ -12,6 +12,7 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
   const spin = useRef(new Animated.Value(0)).current;
   const pulseValues = useRef([new Animated.Value(0.35), new Animated.Value(0.35), new Animated.Value(0.35)]).current;
   const breathe = useRef(new Animated.Value(0)).current;
+  const sweep = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const spinLoop = Animated.loop(
@@ -39,16 +40,27 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
       ])
     );
 
+    const sweepLoop = Animated.loop(
+      Animated.timing(sweep, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+
     spinLoop.start();
     Animated.stagger(130, pulseLoops).start();
     breatheLoop.start();
+    sweepLoop.start();
 
     return () => {
       spinLoop.stop();
       pulseLoops.forEach(loop => loop.stop());
       breatheLoop.stop();
+      sweepLoop.stop();
     };
-  }, [breathe, pulseValues, spin]);
+  }, [breathe, pulseValues, spin, sweep]);
 
   const rotation = spin.interpolate({
     inputRange: [0, 1],
@@ -58,6 +70,11 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
   const iconScale = breathe.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 1.08],
+  });
+
+  const sweepTranslate = sweep.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-120, 120],
   });
 
   return (
@@ -79,6 +96,9 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
           />
         ))}
       </View>
+      <View style={styles.progressTrack}>
+        <Animated.View style={[styles.progressSweep, { transform: [{ translateX: sweepTranslate }] }]} />
+      </View>
       <Text style={styles.label}>{label}</Text>
     </View>
   );
@@ -93,6 +113,20 @@ const styles = StyleSheet.create({
   dotsRow: {
     flexDirection: 'row',
     gap: 6,
+  },
+  progressTrack: {
+    width: 120,
+    height: 4,
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: '#1F3158',
+  },
+  progressSweep: {
+    width: 60,
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: palette.primary,
+    opacity: 0.75,
   },
   dot: {
     width: 8,
