@@ -29,12 +29,15 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : appLightTheme}>
       <Stack
         screenOptions={{
-          animation: 'slide_from_right',
-          animationDuration: 260,
+          animation: 'fade_from_bottom',
+          animationDuration: 320,
           contentStyle: { backgroundColor: palette.background },
         }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen
+          name="modal"
+          options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 320, title: 'Modal' }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
