@@ -1,8 +1,8 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { palette, spacing } from '@/constants/design-system';
 
 export default function TabLayout() {
@@ -35,48 +35,42 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Inicio',
-          tabBarIcon: ({ color }) => <IconSymbol size={20} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="manual"
-        options={{
-          title: 'Manual',
-          tabBarIcon: ({ color }) => <IconSymbol size={20} name="square.and.pencil" color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={22} name="home-variant-outline" color={color} />,
         }}
       />
       <Tabs.Screen
         name="camera"
         options={{
-          title: 'Escanear',
-          tabBarIcon: ({ color }) => <IconSymbol size={20} name="camera.fill" color={color} />,
+          title: 'Scan',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={22} name="qrcode-scan" color={color} />,
         }}
       />
-
       <Tabs.Screen
-        name="ai"
+        name="recipes"
         options={{
-          title: 'Nutri IA',
-          tabBarIcon: ({ color }) => <IconSymbol size={20} name="sparkles" color={color} />,
+          title: 'Recipes',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={22} name="silverware-fork-knife" color={color} />,
         }}
       />
-
       <Tabs.Screen
-        name="explore"
+        name="history"
         options={{
-          title: 'Insights',
-          tabBarIcon: ({ color }) => <IconSymbol size={20} name="chart.bar.fill" color={color} />,
+          title: 'History',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={22} name="history" color={color} />,
         }}
       />
-
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Perfil',
-          tabBarIcon: ({ color }) => <IconSymbol size={20} name="person.fill" color={color} />,
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons size={22} name="account-circle-outline" color={color} />,
         }}
       />
+
+      <Tabs.Screen name="manual" options={{ href: null }} />
+      <Tabs.Screen name="ai" options={{ href: null }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }
