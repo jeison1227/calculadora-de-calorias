@@ -10,16 +10,47 @@ import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
 import { FadeInView } from '@/components/ui/fade-in-view';
 import { Header } from '@/components/ui/header';
+import { AppInput } from '@/components/ui/input';
 import { LoadingDots } from '@/components/ui/loading-dots';
 import { palette, spacing, typography } from '@/constants/design-system';
 import { addMealToHistory, toNumber } from '@/libreria/meal-history';
 
-type DetectedFood = {
-  name: string;
+type FoodMetrics = {
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
+};
+
+type DetectedFood = FoodMetrics & {
+  name: string;
+  estimatedGrams: number;
+  grams: number;
+  baseMetrics: FoodMetrics;
+};
+
+const DEFAULT_PORTION_GRAMS = 100;
+
+const scaleMetricsByGrams = (metrics: FoodMetrics, grams: number, baseGrams: number): FoodMetrics => {
+  if (!baseGrams) return metrics;
+  const ratio = grams / baseGrams;
+  return {
+    calories: metrics.calories * ratio,
+    protein: metrics.protein * ratio,
+    carbs: metrics.carbs * ratio,
+    fat: metrics.fat * ratio,
+  };
+};
+
+const buildDetectedFood = (input: { name: string; metrics: FoodMetrics; estimatedGrams: number }): DetectedFood => {
+  const safeEstimatedGrams = Math.max(1, toNumber(input.estimatedGrams) || DEFAULT_PORTION_GRAMS);
+  return {
+    name: input.name,
+    estimatedGrams: safeEstimatedGrams,
+    grams: safeEstimatedGrams,
+    baseMetrics: input.metrics,
+    ...input.metrics,
+  };
 };
 
 const parseFoodsFromText = (rawText: string): DetectedFood[] =>
@@ -34,15 +65,19 @@ const parseFoodsFromText = (rawText: string): DetectedFood[] =>
       const proteinMatch = cleaned.match(/(?:prote[ií]na|protein|p)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
       const carbsMatch = cleaned.match(/(?:carbohidratos|carbs?|c)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
       const fatMatch = cleaned.match(/(?:grasas?|fat|g)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/i);
+      const gramsMatch = cleaned.match(/(\d+(?:[.,]\d+)?)\s*g(?:ramos)?/i);
 
       if (!nameMatch || !caloriesMatch) return null;
-      return {
+      return buildDetectedFood({
         name: nameMatch[0].trim(),
-        calories: toNumber(caloriesMatch[1]?.replace(',', '.')),
-        protein: toNumber(proteinMatch?.[1]?.replace(',', '.')),
-        carbs: toNumber(carbsMatch?.[1]?.replace(',', '.')),
-        fat: toNumber(fatMatch?.[1]?.replace(',', '.')),
-      };
+        estimatedGrams: toNumber(gramsMatch?.[1]?.replace(',', '.')),
+        metrics: {
+          calories: toNumber(caloriesMatch[1]?.replace(',', '.')),
+          protein: toNumber(proteinMatch?.[1]?.replace(',', '.')),
+          carbs: toNumber(carbsMatch?.[1]?.replace(',', '.')),
+          fat: toNumber(fatMatch?.[1]?.replace(',', '.')),
+        },
+      });
     })
     .filter((food): food is DetectedFood => Boolean(food));
 
@@ -56,9 +91,29 @@ export default function CameraScreen() {
   const [foods, setFoods] = useState<DetectedFood[]>([]);
 
   const totals = useMemo(
-    () => foods.reduce((acc, food) => ({ calories: acc.calories + food.calories, protein: acc.protein + food.protein, carbs: acc.carbs + food.carbs, fat: acc.fat + food.fat }), { calories: 0, protein: 0, carbs: 0, fat: 0 }),
+    () =>
+      foods.reduce(
+        (acc, food) => ({
+          calories: acc.calories + food.calories,
+          protein: acc.protein + food.protein,
+          carbs: acc.carbs + food.carbs,
+          fat: acc.fat + food.fat,
+        }),
+        { calories: 0, protein: 0, carbs: 0, fat: 0 }
+      ),
     [foods]
   );
+
+  const updateFoodGrams = (index: number, rawGrams: string) => {
+    const nextGrams = Math.max(0, toNumber(rawGrams.replace(',', '.')));
+    setFoods(prevFoods =>
+      prevFoods.map((food, foodIndex) => {
+        if (foodIndex !== index) return food;
+        const scaled = scaleMetricsByGrams(food.baseMetrics, nextGrams, food.estimatedGrams);
+        return { ...food, grams: nextGrams, ...scaled };
+      })
+    );
+  };
 
   if (!permission?.granted) {
     return (
@@ -112,7 +167,18 @@ export default function CameraScreen() {
       const data = await res.json();
       const summary = data.respuestaIA ?? data.resumen ?? null;
       const apiFoods = Array.isArray(data.alimentos)
-        ? data.alimentos.map((item: any) => ({ name: item.nombre ?? item.name ?? 'Alimento detectado', calories: toNumber(item.calorias ?? item.calories), protein: toNumber(item.proteina ?? item.protein), carbs: toNumber(item.carbohidratos ?? item.carbs), fat: toNumber(item.grasa ?? item.fat) }))
+        ? data.alimentos.map((item: any) =>
+            buildDetectedFood({
+              name: item.nombre ?? item.name ?? 'Alimento detectado',
+              estimatedGrams: item.gramosEstimados ?? item.estimatedGrams ?? item.gramos ?? item.weightGrams,
+              metrics: {
+                calories: toNumber(item.calorias ?? item.calories),
+                protein: toNumber(item.proteina ?? item.protein),
+                carbs: toNumber(item.carbohidratos ?? item.carbs),
+                fat: toNumber(item.grasa ?? item.fat),
+              },
+            })
+          )
         : [];
       const parsedFromText = typeof summary === 'string' ? parseFoodsFromText(summary) : [];
       setFoods(apiFoods.length ? apiFoods : parsedFromText);
@@ -149,6 +215,7 @@ export default function CameraScreen() {
                 <Text style={styles.totalText}>Total: {Math.round(totals.calories)} kcal</Text>
                 <Text style={styles.totalSubText}>P {Math.round(totals.protein)}g · C {Math.round(totals.carbs)}g · G {Math.round(totals.fat)}g</Text>
               </View>
+              <Text style={styles.sectionBody}>Los gramos se estiman automáticamente con IA y puedes ajustarlos para recalcular macros y calorías al instante.</Text>
               <AppButton title="Guardar comida en historial" onPress={saveMealToHistory} loading={saving} />
             </Card>
 
@@ -158,6 +225,14 @@ export default function CameraScreen() {
                   <MaterialCommunityIcons name="food-apple" size={16} color={palette.primary} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.foodName}>{food.name}</Text>
+                    <Text style={styles.metric}>⚖️ Peso estimado: {Math.round(food.estimatedGrams)} g</Text>
+                    <Text style={styles.metric}>Ajustar gramos</Text>
+                    <AppInput
+                      keyboardType="numeric"
+                      value={food.grams ? String(Math.round(food.grams)) : ''}
+                      onChangeText={value => updateFoodGrams(index, value)}
+                      placeholder="Ej: 120"
+                    />
                     <Text style={styles.metric}>🔥 {Math.round(food.calories)} kcal</Text>
                     <Text style={styles.metric}>💪 {Math.round(food.protein)}g · 🍞 {Math.round(food.carbs)}g · 🥑 {Math.round(food.fat)}g</Text>
                   </View>
