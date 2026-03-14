@@ -9,7 +9,10 @@ type CalorieProgressProps = {
 };
 
 export function CalorieProgress({ consumed, target }: CalorieProgressProps) {
-  const progress = useMemo(() => Math.min(consumed / target, 1), [consumed, target]);
+  const progress = useMemo(() => {
+    if (target <= 0) return 0;
+    return Math.min(consumed / target, 1);
+  }, [consumed, target]);
   const widthAnim = useRef(new Animated.Value(0)).current;
   const shimmer = useRef(new Animated.Value(0)).current;
 

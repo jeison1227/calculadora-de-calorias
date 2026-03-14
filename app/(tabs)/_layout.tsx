@@ -10,8 +10,12 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        animation: 'fade',
+        animation: 'shift',
         tabBarButton: HapticTab,
+        transitionSpec: {
+          animation: 'timing',
+          config: { duration: 220 },
+        },
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 11,
