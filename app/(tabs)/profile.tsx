@@ -1,146 +1,84 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
 import { Header } from '@/components/ui/header';
 import { AppInput } from '@/components/ui/input';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
-import {
-  ensureReminderPermission,
-  getReminderLabel,
-  getReminderSettings,
-  isReminderEnabled,
-  reminderTypes,
-  ReminderType,
-  updateReminder,
-} from '@/libreria/reminders';
+import { GoalType, UserProfile, defaultUserProfile, getUserProfile, saveUserProfile } from '@/libreria/user-profile';
 
-type ActivityLevel = {
-  label: string;
-  value: string;
-  description: string;
-};
+const activityLevels = [
+  { label: 'Sedentary', value: 'sedentary' },
+  { label: 'Light', value: 'light' },
+  { label: 'Moderate', value: 'moderate' },
+  { label: 'Active', value: 'active' },
+  { label: 'Very Active', value: 'very_active' },
+] as const;
 
-const activityLevels: ActivityLevel[] = [
-  { label: 'Sedentario', value: 'sedentary', description: 'Poco o nada de ejercicio' },
-  { label: 'Ligero', value: 'light', description: 'Ejercicio 1-3 días/semana' },
-  { label: 'Moderado', value: 'moderate', description: 'Ejercicio 3-5 días/semana' },
-  { label: 'Alto', value: 'active', description: 'Ejercicio 6-7 días/semana' },
-  { label: 'Muy alto', value: 'very-active', description: 'Trabajo físico intenso o doble sesión' },
+const goals: { label: string; value: GoalType }[] = [
+  { label: 'Lose weight', value: 'lose_weight' },
+  { label: 'Maintain', value: 'maintain' },
+  { label: 'Gain muscle', value: 'gain_muscle' },
 ];
 
 export default function ProfileScreen() {
-  const [age, setAge] = useState('');
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
-  const [dailyCalorieGoal, setDailyCalorieGoal] = useState('2000');
-  const [activityLevel, setActivityLevel] = useState<ActivityLevel>(activityLevels[2]);
-  const [reminders, setReminders] = useState<Record<ReminderType, boolean>>({
-    breakfast: false,
-    lunch: false,
-    dinner: false,
-    hydration: false,
-  });
-  const [updatingReminder, setUpdatingReminder] = useState<ReminderType | null>(null);
-
-  const completion = useMemo(() => {
-    const fields = [age, height, weight, dailyCalorieGoal];
-    const filled = fields.filter(Boolean).length;
-    return Math.round((filled / fields.length) * 100);
-  }, [age, height, weight, dailyCalorieGoal]);
+  const [profile, setProfile] = useState<UserProfile>(defaultUserProfile);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const loadReminderState = async () => {
-      const settings = await getReminderSettings();
-      setReminders({
-        breakfast: isReminderEnabled(settings.breakfast),
-        lunch: isReminderEnabled(settings.lunch),
-        dinner: isReminderEnabled(settings.dinner),
-        hydration: isReminderEnabled(settings.hydration),
-      });
-    };
-
-    loadReminderState();
+    getUserProfile().then(setProfile);
   }, []);
 
-  const onToggleReminder = async (type: ReminderType, enabled: boolean) => {
-    setUpdatingReminder(type);
+  const completion = useMemo(() => {
+    const fields = [profile.age, profile.height, profile.weight, profile.dailyCalorieGoal];
+    const valid = fields.filter(value => value > 0).length;
+    return Math.round((valid / fields.length) * 100);
+  }, [profile]);
 
-    try {
-      if (enabled) {
-        const granted = await ensureReminderPermission();
-        if (!granted) {
-          Alert.alert(
-            'Notificaciones no disponibles',
-            'No se pudo habilitar este recordatorio porque los permisos de notificación no están concedidos o la función no está disponible en esta compilación.'
-          );
-          return;
-        }
-      }
+  const updateNumber = (field: keyof UserProfile, value: string) => {
+    const parsed = Number(value.replace(',', '.'));
+    setProfile(prev => ({ ...prev, [field]: Number.isFinite(parsed) ? parsed : 0 }));
+  };
 
-      await updateReminder(type, enabled);
-      setReminders(prev => ({ ...prev, [type]: enabled }));
-    } finally {
-      setUpdatingReminder(null);
-    }
+  const onSave = async () => {
+    setSaving(true);
+    await saveUserProfile(profile);
+    setSaving(false);
+    Alert.alert('Saved', 'Your profile and calorie goal were updated.');
   };
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Header
-        title="Perfil"
-        subtitle="Completa tus datos para personalizar tus recomendaciones de calorías y seguimiento diario."
-      />
+      <Header title="Profile" subtitle="Configura tus métricas personales y objetivo para personalizar el asistente de nutrición." />
 
       <Card>
-        <View style={styles.cardHeader}>
-          <Text style={styles.sectionTitle}>Datos personales</Text>
-          <View style={styles.progressBadge}>
-            <MaterialCommunityIcons name="progress-check" size={14} color={palette.primary} />
-            <Text style={styles.progressText}>{completion}% completo</Text>
-          </View>
+        <View style={styles.rowBetween}>
+          <Text style={styles.sectionTitle}>Body Metrics</Text>
+          <Text style={styles.progress}>{completion}% complete</Text>
         </View>
 
-        <Text style={styles.label}>Edad</Text>
-        <AppInput
-          placeholder="Ej: 29"
-          keyboardType="numeric"
-          value={age}
-          onChangeText={setAge}
-        />
+        <Text style={styles.label}>Weight (kg)</Text>
+        <AppInput value={String(profile.weight)} keyboardType="numeric" onChangeText={value => updateNumber('weight', value)} />
 
-        <Text style={styles.label}>Altura (cm)</Text>
-        <AppInput
-          placeholder="Ej: 172"
-          keyboardType="numeric"
-          value={height}
-          onChangeText={setHeight}
-        />
+        <Text style={styles.label}>Height (cm)</Text>
+        <AppInput value={String(profile.height)} keyboardType="numeric" onChangeText={value => updateNumber('height', value)} />
 
-        <Text style={styles.label}>Peso (kg)</Text>
-        <AppInput
-          placeholder="Ej: 70"
-          keyboardType="numeric"
-          value={weight}
-          onChangeText={setWeight}
-        />
+        <Text style={styles.label}>Age</Text>
+        <AppInput value={String(profile.age)} keyboardType="numeric" onChangeText={value => updateNumber('age', value)} />
       </Card>
 
       <Card>
-        <Text style={styles.sectionTitle}>Nivel de actividad</Text>
-        <View style={styles.levelsWrap}>
+        <Text style={styles.sectionTitle}>Activity level</Text>
+        <View style={styles.optionsWrap}>
           {activityLevels.map(level => {
-            const selected = level.value === activityLevel.value;
+            const selected = profile.activityLevel === level.value;
             return (
               <Pressable
                 key={level.value}
-                style={[styles.levelOption, selected && styles.levelOptionSelected]}
-                onPress={() => setActivityLevel(level)}>
-                <Text style={[styles.levelLabel, selected && styles.levelLabelSelected]}>{level.label}</Text>
-                <Text style={[styles.levelDescription, selected && styles.levelDescriptionSelected]}>
-                  {level.description}
-                </Text>
+                style={[styles.chip, selected && styles.chipSelected]}
+                onPress={() => setProfile(prev => ({ ...prev, activityLevel: level.value }))}>
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{level.label}</Text>
               </Pressable>
             );
           })}
@@ -148,41 +86,29 @@ export default function ProfileScreen() {
       </Card>
 
       <Card>
-        <Text style={styles.sectionTitle}>Meta diaria</Text>
-        <Text style={styles.label}>Objetivo de calorías</Text>
+        <Text style={styles.sectionTitle}>AI Diet Planner Goal</Text>
+        <View style={styles.optionsWrap}>
+          {goals.map(goal => {
+            const selected = profile.goal === goal.value;
+            return (
+              <Pressable
+                key={goal.value}
+                style={[styles.goalCard, selected && styles.goalCardSelected]}
+                onPress={() => setProfile(prev => ({ ...prev, goal: goal.value }))}>
+                <Text style={[styles.goalTitle, selected && styles.goalTitleSelected]}>{goal.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.label}>Daily calorie goal</Text>
         <AppInput
-          placeholder="Ej: 2100"
+          value={String(profile.dailyCalorieGoal)}
           keyboardType="numeric"
-          value={dailyCalorieGoal}
-          onChangeText={setDailyCalorieGoal}
+          onChangeText={value => updateNumber('dailyCalorieGoal', value)}
         />
 
-        <View style={styles.goalHint}>
-          <MaterialCommunityIcons name="fire" size={16} color={palette.accent} />
-          <Text style={styles.goalHintText}>
-            Tu meta actual: {dailyCalorieGoal || '0'} kcal • Nivel: {activityLevel.label}
-          </Text>
-        </View>
-      </Card>
-
-      <Card>
-        <Text style={styles.sectionTitle}>Recordatorios</Text>
-        <Text style={styles.reminderCaption}>Activa notificaciones para comidas e hidratación durante el día.</Text>
-
-        <View style={styles.reminderList}>
-          {reminderTypes.map(reminder => (
-            <View key={reminder} style={styles.reminderRow}>
-              <Text style={styles.reminderLabel}>{getReminderLabel(reminder)}</Text>
-              <Switch
-                value={reminders[reminder]}
-                disabled={updatingReminder === reminder}
-                onValueChange={enabled => onToggleReminder(reminder, enabled)}
-                trackColor={{ false: '#31435D', true: '#2A7B56' }}
-                thumbColor={reminders[reminder] ? '#7FFFB8' : '#F3F4F6'}
-              />
-            </View>
-          ))}
-        </View>
+        <AppButton title="Save profile" onPress={onSave} loading={saving} />
       </Card>
     </ScrollView>
   );
@@ -191,82 +117,38 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: palette.background },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 120 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitle: { ...typography.subtitle, fontSize: 20 },
-  label: { ...typography.caption, marginTop: spacing.xs, color: '#D4E4FF' },
-  progressBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+  progress: {
+    ...typography.caption,
+    color: palette.primary,
+    borderWidth: 1,
+    borderColor: palette.border,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  label: { ...typography.caption, color: '#D9E6FF' },
+  optionsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  chip: {
     borderWidth: 1,
     borderColor: palette.border,
     borderRadius: radius.pill,
-    paddingVertical: 6,
+    paddingVertical: 8,
     paddingHorizontal: spacing.sm,
-    backgroundColor: '#132942',
+    backgroundColor: '#101C35',
   },
-  progressText: { ...typography.caption, color: palette.primary },
-  levelsWrap: { gap: spacing.sm },
-  levelOption: {
+  chipSelected: { borderColor: palette.primary, backgroundColor: '#163A2B' },
+  chipText: { ...typography.caption, color: palette.textPrimary },
+  chipTextSelected: { color: '#D8FFE8' },
+  goalCard: {
     borderWidth: 1,
     borderColor: palette.border,
     borderRadius: radius.md,
     padding: spacing.sm,
-    backgroundColor: palette.backgroundSoft,
-    gap: 4,
+    backgroundColor: '#101C35',
   },
-  levelOptionSelected: {
-    borderColor: palette.primary,
-    backgroundColor: '#132942',
-  },
-  levelLabel: {
-    ...typography.body,
-    color: palette.textPrimary,
-    fontWeight: '700',
-  },
-  levelLabelSelected: {
-    color: '#D3FFE4',
-  },
-  levelDescription: {
-    ...typography.caption,
-  },
-  levelDescriptionSelected: {
-    color: '#B8E8CA',
-  },
-  goalHint: {
-    marginTop: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  goalHintText: {
-    ...typography.body,
-    color: palette.textSecondary,
-  },
-  reminderCaption: {
-    ...typography.caption,
-    color: palette.textSecondary,
-    marginTop: 2,
-  },
-  reminderList: {
-    marginTop: spacing.sm,
-    gap: spacing.sm,
-  },
-  reminderRow: {
-    borderWidth: 1,
-    borderColor: palette.border,
-    borderRadius: radius.md,
-    backgroundColor: palette.backgroundSoft,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  reminderLabel: {
-    ...typography.body,
-    color: palette.textPrimary,
-    flex: 1,
-    marginRight: spacing.sm,
-  },
+  goalCardSelected: { borderColor: palette.primary, backgroundColor: '#17392C' },
+  goalTitle: { ...typography.body, color: palette.textPrimary },
+  goalTitleSelected: { color: '#D8FFE8', fontWeight: '700' },
 });
