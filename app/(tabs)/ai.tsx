@@ -1,11 +1,12 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
 import { FadeInView } from '@/components/ui/fade-in-view';
 import { Header } from '@/components/ui/header';
+import { LoadingDots } from '@/components/ui/loading-dots';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
 import { generateNutritionRecommendation, goalLabels, UserGoal } from '@/libreria/ai-nutrition';
 
@@ -14,8 +15,29 @@ const goals: UserGoal[] = ['lose_weight', 'maintain', 'gain_muscle'];
 export default function AiNutritionScreen() {
   const [selectedGoal, setSelectedGoal] = useState<UserGoal>('maintain');
   const [activeGoal, setActiveGoal] = useState<UserGoal>('maintain');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const analyzeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const recommendation = useMemo(() => generateNutritionRecommendation(activeGoal), [activeGoal]);
+
+  const generateRecommendation = () => {
+    if (analyzeTimeoutRef.current) {
+      clearTimeout(analyzeTimeoutRef.current);
+    }
+    setIsAnalyzing(true);
+    analyzeTimeoutRef.current = setTimeout(() => {
+      setActiveGoal(selectedGoal);
+      setIsAnalyzing(false);
+    }, 1100);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (analyzeTimeoutRef.current) {
+        clearTimeout(analyzeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <FadeInView style={styles.screen}>
@@ -41,7 +63,8 @@ export default function AiNutritionScreen() {
             })}
           </View>
 
-          <AppButton title="Generar recomendación IA" onPress={() => setActiveGoal(selectedGoal)} />
+          {isAnalyzing && <LoadingDots label="Analizando tu objetivo nutricional..." />}
+          <AppButton title="Generar recomendación IA" onPress={generateRecommendation} loading={isAnalyzing} />
         </Card>
 
         <Card style={styles.analysisCard}>

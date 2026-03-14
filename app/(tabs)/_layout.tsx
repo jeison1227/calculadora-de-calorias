@@ -10,6 +10,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        animation: 'fade',
         tabBarButton: HapticTab,
         tabBarShowLabel: true,
         tabBarLabelStyle: {

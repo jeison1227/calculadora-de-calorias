@@ -10,7 +10,7 @@ type LoadingDotsProps = {
 
 export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps) {
   const spin = useRef(new Animated.Value(0)).current;
-  const pulse = useRef(new Animated.Value(0.6)).current;
+  const pulseValues = useRef([new Animated.Value(0.35), new Animated.Value(0.35), new Animated.Value(0.35)]).current;
 
   useEffect(() => {
     Animated.loop(
@@ -22,13 +22,18 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
       })
     ).start();
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0.4, duration: 500, useNativeDriver: true }),
-      ])
+    Animated.stagger(
+      140,
+      pulseValues.map(pulse =>
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(pulse, { toValue: 1, duration: 420, useNativeDriver: true }),
+            Animated.timing(pulse, { toValue: 0.35, duration: 420, useNativeDriver: true }),
+          ])
+        )
+      )
     ).start();
-  }, [pulse, spin]);
+  }, [pulseValues, spin]);
 
   const rotation = spin.interpolate({
     inputRange: [0, 1],
@@ -41,7 +46,7 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
         <MaterialCommunityIcons name="food-apple" size={20} color={palette.primary} />
       </Animated.View>
       <View style={styles.dotsRow}>
-        {[0, 1, 2].map(index => (
+        {pulseValues.map((pulse, index) => (
           <Animated.View
             key={index}
             style={[

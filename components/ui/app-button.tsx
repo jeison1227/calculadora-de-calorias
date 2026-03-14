@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { ActivityIndicator, Animated, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text } from 'react-native';
 
 import { palette, radius, spacing } from '@/constants/design-system';
 
@@ -19,18 +19,39 @@ export function AppButton({
   disabled = false,
 }: AppButtonProps) {
   const scale = useRef(new Animated.Value(1)).current;
+  const glow = useRef(new Animated.Value(0)).current;
 
   const animatePress = (toValue: number) => {
-    Animated.spring(scale, {
-      toValue,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 210,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scale, {
+        toValue,
+        useNativeDriver: true,
+        friction: 6,
+        tension: 210,
+      }),
+      Animated.timing(glow, {
+        toValue: toValue < 1 ? 1 : 0,
+        duration: 160,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }),
+    ]).start();
   };
 
+  const shadowOpacity = glow.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.1, 0.28],
+  });
+
   return (
-    <Animated.View style={{ transform: [{ scale }] }}>
+    <Animated.View
+      style={[
+        styles.animationWrap,
+        {
+          transform: [{ scale }],
+          shadowOpacity,
+        },
+      ]}>
       <Pressable
         style={({ pressed }) => [
           styles.base,
@@ -52,6 +73,13 @@ export function AppButton({
 }
 
 const styles = StyleSheet.create({
+  animationWrap: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 4,
+    borderRadius: radius.md,
+  },
   base: {
     borderRadius: radius.md,
     paddingVertical: spacing.sm + 4,
