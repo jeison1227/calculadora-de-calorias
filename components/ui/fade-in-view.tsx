@@ -27,19 +27,19 @@ export function FadeInView({ children, duration = 350, style }: FadeInViewProps)
         toValue: 1,
         duration,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(translateY, {
         toValue: 0,
         duration: duration + 80,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(scale, {
         toValue: 1,
         duration: duration + 60,
         easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
     ]).start();
   }, [duration, isFocused, opacity, scale, translateY]);

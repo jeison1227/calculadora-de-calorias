@@ -29,7 +29,7 @@ export function AppButton({
     Animated.parallel([
       Animated.spring(scale, {
         toValue,
-        useNativeDriver: true,
+        useNativeDriver: false,
         friction: 6,
         tension: 210,
       }),
@@ -43,7 +43,7 @@ export function AppButton({
         toValue: pressed ? 1 : 0,
         duration: pressed ? 100 : 200,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(pressGlow, {
         toValue: pressed ? 1 : 0,

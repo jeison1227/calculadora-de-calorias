@@ -20,23 +20,23 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
         toValue: 1,
         duration: 900,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: false,
       })
     );
 
     const pulseLoops = pulseValues.map(pulse =>
       Animated.loop(
         Animated.sequence([
-          Animated.timing(pulse, { toValue: 1, duration: 380, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-          Animated.timing(pulse, { toValue: 0.35, duration: 480, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+          Animated.timing(pulse, { toValue: 1, duration: 380, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+          Animated.timing(pulse, { toValue: 0.35, duration: 480, easing: Easing.in(Easing.quad), useNativeDriver: false }),
         ])
       )
     );
 
     const breatheLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(breathe, { toValue: 1, duration: 800, easing: Easing.out(Easing.sin), useNativeDriver: true }),
-        Animated.timing(breathe, { toValue: 0, duration: 800, easing: Easing.in(Easing.sin), useNativeDriver: true }),
+        Animated.timing(breathe, { toValue: 1, duration: 800, easing: Easing.out(Easing.sin), useNativeDriver: false }),
+        Animated.timing(breathe, { toValue: 0, duration: 800, easing: Easing.in(Easing.sin), useNativeDriver: false }),
       ])
     );
 
@@ -45,7 +45,7 @@ export function LoadingDots({ label = 'Analizando comida...' }: LoadingDotsProps
         toValue: 1,
         duration: 1200,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: false,
       })
     );
 

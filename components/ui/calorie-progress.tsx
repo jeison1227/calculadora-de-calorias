@@ -32,7 +32,7 @@ export function CalorieProgress({ consumed, target }: CalorieProgressProps) {
         toValue: 1,
         duration: 1400,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: false,
       })
     );
 
