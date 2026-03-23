@@ -1,5 +1,13 @@
-import { useRef } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
+import Animated, {
+  Easing,
+  interpolate,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { palette, radius, spacing } from '@/constants/design-system';
 
@@ -9,6 +17,7 @@ type AppButtonProps = {
   variant?: 'primary' | 'secondary' | 'ghost';
   loading?: boolean;
   disabled?: boolean;
+  style?: ViewStyle;
 };
 
 export function AppButton({
@@ -17,77 +26,49 @@ export function AppButton({
   variant = 'primary',
   loading = false,
   disabled = false,
+  style,
 }: AppButtonProps) {
-  const scale = useRef(new Animated.Value(1)).current;
-  const glow = useRef(new Animated.Value(0)).current;
-  const lift = useRef(new Animated.Value(0)).current;
-  const pressGlow = useRef(new Animated.Value(0)).current;
+  const pressed = useSharedValue(0);
 
-  const animatePress = (toValue: number) => {
-    const pressed = toValue < 1;
-
-    Animated.parallel([
-      Animated.spring(scale, {
-        toValue,
-        useNativeDriver: false,
-        friction: 6,
-        tension: 210,
-      }),
-      Animated.timing(glow, {
-        toValue: pressed ? 1 : 0,
-        duration: pressed ? 120 : 220,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
-      Animated.timing(lift, {
-        toValue: pressed ? 1 : 0,
-        duration: pressed ? 100 : 200,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-      Animated.timing(pressGlow, {
-        toValue: pressed ? 1 : 0,
-        duration: pressed ? 90 : 170,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-    ]).start();
+  const handlePressIn = () => {
+    pressed.value = withTiming(1, {
+      duration: 90,
+      easing: Easing.out(Easing.quad),
+    });
   };
 
-  const shadowOpacity = glow.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.1, 0.3],
-  });
+  const handlePressOut = () => {
+    pressed.value = withSpring(0, {
+      damping: 12,
+      stiffness: 240,
+      mass: 0.8,
+    });
+  };
 
-  const translateY = lift.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 2],
-  });
-
-  const borderGlow = pressGlow.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(125, 245, 164, 0.0)', 'rgba(125, 245, 164, 0.55)'],
-  });
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: interpolate(pressed.value, [0, 1], [1, 0.95]) },
+      { translateY: interpolate(pressed.value, [0, 1], [0, 1]) },
+    ],
+    shadowOpacity: interpolate(pressed.value, [0, 1], [0.14, 0.26]),
+    borderColor: interpolateColor(
+      pressed.value,
+      [0, 1],
+      ['rgba(125, 245, 164, 0.10)', 'rgba(125, 245, 164, 0.38)']
+    ),
+  }));
 
   return (
-    <Animated.View
-      style={[
-        styles.animationWrap,
-        {
-          transform: [{ scale }, { translateY }],
-          shadowOpacity,
-          borderColor: borderGlow,
-        },
-      ]}>
+    <Animated.View style={[styles.animationWrap, animatedStyle, style]}>
       <Pressable
-        style={({ pressed }) => [
+        style={({ pressed: isPressed }) => [
           styles.base,
           variantStyles[variant],
-          (pressed || disabled || loading) && styles.dimmed,
+          (isPressed || disabled || loading) && styles.dimmed,
         ]}
         onPress={onPress}
-        onPressIn={() => animatePress(0.96)}
-        onPressOut={() => animatePress(1)}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         disabled={disabled || loading}>
         {loading ? (
           <ActivityIndicator color={variant === 'ghost' ? palette.primary : '#FFFFFF'} />
@@ -103,8 +84,8 @@ const styles = StyleSheet.create({
   animationWrap: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 10,
-    elevation: 4,
+    shadowRadius: 12,
+    elevation: 5,
     borderRadius: radius.md,
     borderWidth: 1,
   },
@@ -121,7 +102,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   dimmed: {
-    opacity: 0.75,
+    opacity: 0.82,
   },
 });
 

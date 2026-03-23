@@ -37,7 +37,7 @@ export default function HomeScreen() {
   const plan = useMemo(() => generateMealPlan(profile), [profile]);
 
   return (
-    <FadeInView style={styles.screen}>
+    <FadeInView style={styles.screen} distance={30} initialScale={1}>
       <ScrollView contentContainerStyle={styles.content}>
         <Header title="AI Nutrition Assistant" subtitle="Tu panel profesional de calorías, macros, planificación y progreso semanal." />
 
@@ -67,8 +67,8 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.actionsRow}>
-            <View style={{ flex: 1 }}><AppButton title="Scan Food" onPress={() => router.push('/camera')} /></View>
-            <View style={{ flex: 1 }}><AppButton title="Recipes" variant="ghost" onPress={() => router.push('/recipes')} /></View>
+            <View style={{ flex: 1 }}><AppButton title="Analizar comida con foto" onPress={() => router.push('/camera')} /></View>
+            <View style={{ flex: 1 }}><AppButton title="Recetas" variant="ghost" onPress={() => router.push('/recetas')} /></View>
           </View>
         </Card>
 
