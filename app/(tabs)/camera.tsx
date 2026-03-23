@@ -4,12 +4,13 @@ import * as Speech from 'expo-speech';
 import { useMemo, useRef, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { AnimatedReveal } from '@/components/ui/animated-reveal';
 import { AppButton } from '@/components/ui/app-button';
 import { Card } from '@/components/ui/card';
 import { FadeInView } from '@/components/ui/fade-in-view';
 import { Header } from '@/components/ui/header';
 import { AppInput } from '@/components/ui/input';
-import { LoadingDots } from '@/components/ui/loading-dots';
+import { LoadingOverlay } from '@/components/ui/loading-overlay';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
 import { addMealToHistory, toNumber } from '@/libreria/meal-history';
 
@@ -76,7 +77,7 @@ export default function CameraScreen() {
   };
 
   const analyzePhoto = async () => {
-    if (!cameraRef.current) return;
+    if (!cameraRef.current || loading) return;
     setLoading(true);
     setAiSummary(null);
     setFoods([]);
@@ -145,63 +146,72 @@ export default function CameraScreen() {
   }
 
   return (
-    <FadeInView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Header title="AI Food Scanner" subtitle="Detecta múltiples alimentos, estima porciones y ajusta el peso manualmente." />
+    <View style={styles.screen}>
+      <FadeInView style={styles.container} distance={24} initialScale={1}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Header title="AI Food Scanner" subtitle="Detecta múltiples alimentos, estima porciones y ajusta el peso manualmente." />
 
-        <View style={styles.cameraWrap}><CameraView ref={cameraRef} style={styles.camera} /></View>
+          <View style={styles.cameraWrap}><CameraView ref={cameraRef} style={styles.camera} /></View>
 
-        <Card>
-          <Text style={styles.sectionTitle}>Smart analysis</Text>
-          <Text style={styles.sectionBody}>Captura tu plato para obtener calorías y macros por cada alimento.</Text>
-          {loading && <LoadingDots label="AI analyzing your food..." />}
-          <AppButton title="Analyze food" onPress={analyzePhoto} loading={loading} />
-        </Card>
-
-        {capturedImageUri && (
           <Card>
-            <Text style={styles.sectionTitle}>Image preview</Text>
-            <Image source={{ uri: capturedImageUri }} style={styles.previewImage} />
+            <Text style={styles.sectionTitle}>Smart analysis</Text>
+            <Text style={styles.sectionBody}>Captura tu plato para obtener calorías y macros por cada alimento.</Text>
+            <AppButton title="Analyze food" onPress={analyzePhoto} loading={loading} />
           </Card>
-        )}
 
-        {!!foods.length && (
-          <Card>
-            <View style={styles.totalPill}>
-              <Text style={styles.totalText}>{Math.round(totals.calories)} kcal</Text>
-              <Text style={styles.totalSubText}>P {Math.round(totals.protein)}g · C {Math.round(totals.carbs)}g · F {Math.round(totals.fat)}g</Text>
-            </View>
-            <AppButton title="Save meal" onPress={saveMeal} loading={saving} />
+          {capturedImageUri && (
+            <Card>
+              <Text style={styles.sectionTitle}>Image preview</Text>
+              <Image source={{ uri: capturedImageUri }} style={styles.previewImage} />
+            </Card>
+          )}
 
-            {foods.map((food, index) => (
-              <View key={`${food.name}-${index}`} style={styles.foodCard}>
-                <Text style={styles.foodName}>{food.name}</Text>
-                <Text style={styles.metric}>Estimated portion: {Math.round(food.estimatedGrams)}g</Text>
-                <AppInput
-                  keyboardType="numeric"
-                  value={food.grams ? String(Math.round(food.grams)) : ''}
-                  onChangeText={value => updateFoodGrams(index, value)}
-                  placeholder="Adjust grams"
-                />
-                <Text style={styles.metric}>Calories: {Math.round(food.calories)} kcal</Text>
-                <Text style={styles.metric}>Protein {Math.round(food.protein)}g · Carbs {Math.round(food.carbs)}g · Fat {Math.round(food.fat)}g</Text>
+          {!!foods.length && (
+            <Card>
+              <View style={styles.totalPill}>
+                <Text style={styles.totalText}>{Math.round(totals.calories)} kcal</Text>
+                <Text style={styles.totalSubText}>P {Math.round(totals.protein)}g · C {Math.round(totals.carbs)}g · F {Math.round(totals.fat)}g</Text>
               </View>
-            ))}
-          </Card>
-        )}
+              <AppButton title="Save meal" onPress={saveMeal} loading={saving} />
 
-        {aiSummary && (
-          <Card>
-            <Text style={styles.sectionTitle}>AI summary</Text>
-            <Text style={styles.summary}>{aiSummary}</Text>
-          </Card>
-        )}
-      </ScrollView>
-    </FadeInView>
+              {foods.map((food, index) => (
+                <View key={`${food.name}-${index}`} style={styles.foodCard}>
+                  <Text style={styles.foodName}>{food.name}</Text>
+                  <Text style={styles.metric}>Estimated portion: {Math.round(food.estimatedGrams)}g</Text>
+                  <AppInput
+                    keyboardType="numeric"
+                    value={food.grams ? String(Math.round(food.grams)) : ''}
+                    onChangeText={value => updateFoodGrams(index, value)}
+                    placeholder="Adjust grams"
+                  />
+                  <Text style={styles.metric}>Calories: {Math.round(food.calories)} kcal</Text>
+                  <Text style={styles.metric}>Protein {Math.round(food.protein)}g · Carbs {Math.round(food.carbs)}g · Fat {Math.round(food.fat)}g</Text>
+                </View>
+              ))}
+            </Card>
+          )}
+
+          {!!aiSummary && (
+            <AnimatedReveal visible={!!aiSummary}>
+              <Card>
+                <Text style={styles.sectionTitle}>AI summary</Text>
+                <Text style={styles.summary}>{aiSummary}</Text>
+              </Card>
+            </AnimatedReveal>
+          )}
+        </ScrollView>
+      </FadeInView>
+
+      <LoadingOverlay visible={loading} label="Analizando alimento..." />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: palette.background,
+  },
   container: { flex: 1, backgroundColor: palette.background },
   content: { padding: spacing.md, gap: spacing.md, paddingBottom: 120 },
   cameraWrap: {

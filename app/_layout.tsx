@@ -37,6 +37,8 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="camera" options={{ animation: 'slide_from_right', animationDuration: 260 }} />
+        <Stack.Screen name="recetas" options={{ animation: 'slide_from_right', animationDuration: 260 }} />
         <Stack.Screen
           name="modal"
           options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 320, title: 'Modal' }}

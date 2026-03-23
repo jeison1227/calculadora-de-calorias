@@ -1,54 +1,49 @@
 import { useIsFocused } from '@react-navigation/native';
-import { ReactNode, useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, ViewStyle } from 'react-native';
+import { ReactNode, useEffect } from 'react';
+import { StyleSheet, ViewStyle } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 type FadeInViewProps = {
   children: ReactNode;
   duration?: number;
   style?: ViewStyle;
+  distance?: number;
+  initialScale?: number;
 };
 
-export function FadeInView({ children, duration = 350, style }: FadeInViewProps) {
+export function FadeInView({
+  children,
+  duration = 350,
+  style,
+  distance = 14,
+  initialScale = 0.99,
+}: FadeInViewProps) {
   const isFocused = useIsFocused();
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(14)).current;
-  const scale = useRef(new Animated.Value(0.99)).current;
+  const progress = useSharedValue(0);
 
   useEffect(() => {
-    if (!isFocused) {
-      opacity.setValue(0);
-      translateY.setValue(14);
-      scale.setValue(0.99);
-      return;
-    }
+    progress.value = isFocused
+      ? withTiming(1, {
+          duration,
+          easing: Easing.out(Easing.cubic),
+        })
+      : 0;
+  }, [duration, isFocused, progress]);
 
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: duration + 80,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: duration + 60,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: false,
-      }),
-    ]).start();
-  }, [duration, isFocused, opacity, scale, translateY]);
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [
+      { translateY: distance * (1 - progress.value) },
+      { scale: initialScale + (1 - initialScale) * progress.value },
+    ],
+  }));
 
-  return (
-    <Animated.View style={[styles.wrapper, style, { opacity, transform: [{ translateY }, { scale }] }]}> 
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={[styles.wrapper, style, animatedStyle]}>{children}</Animated.View>;
 }
 
 const styles = StyleSheet.create({
