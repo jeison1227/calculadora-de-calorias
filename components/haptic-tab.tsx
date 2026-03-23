@@ -12,7 +12,7 @@ export function HapticTab(props: BottomTabBarButtonProps) {
       toValue,
       duration: toValue < 1 ? 110 : 180,
       easing: toValue < 1 ? Easing.out(Easing.quad) : Easing.out(Easing.back(1.6)),
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   };
 

@@ -31,13 +31,13 @@ export function CircularCalorieProgress({ consumed, target, size = 180 }: Circul
           toValue: 1,
           duration: 1200,
           easing: Easing.out(Easing.sin),
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
         Animated.timing(float, {
           toValue: 0,
           duration: 1200,
           easing: Easing.in(Easing.sin),
-          useNativeDriver: true,
+          useNativeDriver: false,
         }),
       ])
     );
