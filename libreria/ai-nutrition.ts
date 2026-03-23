@@ -1,4 +1,4 @@
-export type UserGoal = 'lose_weight' | 'maintain' | 'gain_muscle';
+export type UserGoal = 'lose_weight' | 'maintain' | 'gain_weight';
 
 export type MealSuggestion = {
   meal: string;
@@ -71,14 +71,14 @@ const plansByGoal: Record<UserGoal, NutritionPlan> = {
       },
     ],
   },
-  gain_muscle: {
-    title: 'Plan IA para ganancia muscular',
+  gain_weight: {
+    title: 'Plan IA para ganancia de peso',
     analysis:
-      'Tu objetivo requiere superávit controlado con alto aporte de proteína y carbohidratos para mejorar el rendimiento.',
+      'Tu objetivo requiere superávit controlado con alta calidad nutricional para subir de peso de forma progresiva.',
     dailyCalories: '2,400 - 2,800 kcal/día',
-    proteinFocus: '1.8 - 2.2 g de proteína por kg corporal',
+    proteinFocus: '1.6 - 2.0 g de proteína por kg corporal',
     meals: [
-      { meal: 'Desayuno', suggestion: 'Avena cocida en leche con plátano, nueces y proteína en polvo.' },
+      { meal: 'Desayuno', suggestion: 'Avena cocida en leche con plátano, nueces y yogur griego.' },
       { meal: 'Almuerzo', suggestion: 'Bowl de arroz, carne magra, frijoles y verduras al vapor.' },
       { meal: 'Cena', suggestion: 'Pechuga de pollo con papas al horno y ensalada con aceite de oliva.' },
       { meal: 'Snack', suggestion: 'Batido de yogur griego, frutas y mantequilla de almendra.' },
@@ -87,7 +87,7 @@ const plansByGoal: Record<UserGoal, NutritionPlan> = {
       {
         name: 'Wrap integral de pavo y hummus',
         prepTime: '15 min',
-        benefits: 'Alta densidad proteica y práctica para después de entrenar.',
+        benefits: 'Aporta energía sostenida y proteína de alta calidad.',
       },
       {
         name: 'Chili de res magra con frijoles',
@@ -105,5 +105,5 @@ export function generateNutritionRecommendation(goal: UserGoal): NutritionPlan {
 export const goalLabels: Record<UserGoal, string> = {
   lose_weight: 'Perder peso',
   maintain: 'Mantener',
-  gain_muscle: 'Ganar músculo',
+  gain_weight: 'Ganar peso',
 };

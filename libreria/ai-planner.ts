@@ -29,11 +29,11 @@ const templates: Record<GoalType, { title: string; ratio: [number, number, numbe
     tip: 'Mantén horarios consistentes y un reparto uniforme de proteína durante el día.',
     mealNames: ['Desayuno energético', 'Almuerzo completo', 'Merienda funcional', 'Cena ligera'],
   },
-  gain_muscle: {
-    title: 'Ganancia muscular',
+  gain_weight: {
+    title: 'Ganancia de peso',
     ratio: [0.24, 0.38, 0.26, 0.12],
-    tip: 'Combina carbohidratos complejos y proteína post-entrenamiento para optimizar recuperación.',
-    mealNames: ['Desayuno anabólico', 'Almuerzo performance', 'Snack post-entreno', 'Cena recuperación'],
+    tip: 'Suma calorías de calidad con carbohidratos complejos, proteína y grasas saludables.',
+    mealNames: ['Desayuno completo', 'Almuerzo performance', 'Snack estratégico', 'Cena de recuperación'],
   },
 };
 
@@ -54,7 +54,7 @@ const buildMealFoods = (index: number) => [
 export const generateMealPlan = (profile: UserProfile): DailyMealPlan => {
   const config = templates[profile.goal];
   const baseCalories = profile.dailyCalorieGoal;
-  const totalCalories = profile.goal === 'lose_weight' ? Math.round(baseCalories * 0.9) : profile.goal === 'gain_muscle' ? Math.round(baseCalories * 1.1) : baseCalories;
+  const totalCalories = profile.goal === 'lose_weight' ? Math.round(baseCalories * 0.9) : profile.goal === 'gain_weight' ? Math.round(baseCalories * 1.1) : baseCalories;
 
   const meals = config.ratio.map((share, index) => {
     const calories = Math.round(totalCalories * share);

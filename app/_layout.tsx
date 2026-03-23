@@ -32,8 +32,11 @@ export default function RootLayout() {
           animation: 'fade_from_bottom',
           animationDuration: 320,
           contentStyle: { backgroundColor: palette.background },
+          headerShown: false,
         }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="modal"
           options={{ presentation: 'modal', animation: 'slide_from_bottom', animationDuration: 320, title: 'Modal' }}
