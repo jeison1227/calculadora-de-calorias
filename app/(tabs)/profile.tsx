@@ -6,21 +6,25 @@ import { Card } from '@/components/ui/card';
 import { Header } from '@/components/ui/header';
 import { AppInput } from '@/components/ui/input';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
-import { GoalType, UserProfile, defaultUserProfile, getUserProfile, saveUserProfile } from '@/libreria/user-profile';
+import { calculateDailyCalories } from '@/utils/calorieCalculator';
+import { UserProfile, defaultUserProfile, getUserProfile, saveUserProfile } from '@/libreria/user-profile';
 
-const activityLevels = [
-  { label: 'Sedentary', value: 'sedentary' },
-  { label: 'Light', value: 'light' },
-  { label: 'Moderate', value: 'moderate' },
-  { label: 'Active', value: 'active' },
-  { label: 'Very Active', value: 'very_active' },
+const genderOptions = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
 ] as const;
 
-const goals: { label: string; value: GoalType }[] = [
+const activityLevels = [
+  { label: 'Low', value: 'low' },
+  { label: 'Moderate', value: 'moderate' },
+  { label: 'High', value: 'high' },
+] as const;
+
+const goals = [
   { label: 'Lose weight', value: 'lose_weight' },
   { label: 'Maintain', value: 'maintain' },
-  { label: 'Gain muscle', value: 'gain_muscle' },
-];
+  { label: 'Gain weight', value: 'gain_weight' },
+] as const;
 
 export default function ProfileScreen() {
   const [profile, setProfile] = useState<UserProfile>(defaultUserProfile);
@@ -36,14 +40,27 @@ export default function ProfileScreen() {
     return Math.round((valid / fields.length) * 100);
   }, [profile]);
 
-  const updateNumber = (field: keyof UserProfile, value: string) => {
+  const updateNumber = (field: keyof Pick<UserProfile, 'weight' | 'height' | 'age' | 'dailyCalorieGoal'>, value: string) => {
     const parsed = Number(value.replace(',', '.'));
     setProfile(prev => ({ ...prev, [field]: Number.isFinite(parsed) ? parsed : 0 }));
   };
 
+  const recalculateCalories = () => {
+    const calculation = calculateDailyCalories({
+      age: profile.age,
+      weight: profile.weight,
+      height: profile.height,
+      gender: profile.gender,
+      activityLevel: profile.activityLevel,
+      goal: profile.goal,
+    });
+
+    setProfile(prev => ({ ...prev, dailyCalorieGoal: calculation.dailyCalories }));
+  };
+
   const onSave = async () => {
     setSaving(true);
-    await saveUserProfile(profile);
+    await saveUserProfile({ ...profile, isOnboardingComplete: true });
     setSaving(false);
     Alert.alert('Saved', 'Your profile and calorie goal were updated.');
   };
@@ -69,6 +86,23 @@ export default function ProfileScreen() {
       </Card>
 
       <Card>
+        <Text style={styles.sectionTitle}>Gender</Text>
+        <View style={styles.optionsWrap}>
+          {genderOptions.map(option => {
+            const selected = profile.gender === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                style={[styles.chip, selected && styles.chipSelected]}
+                onPress={() => setProfile(prev => ({ ...prev, gender: option.value }))}>
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{option.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </Card>
+
+      <Card>
         <Text style={styles.sectionTitle}>Activity level</Text>
         <View style={styles.optionsWrap}>
           {activityLevels.map(level => {
@@ -86,7 +120,7 @@ export default function ProfileScreen() {
       </Card>
 
       <Card>
-        <Text style={styles.sectionTitle}>AI Diet Planner Goal</Text>
+        <Text style={styles.sectionTitle}>Goal</Text>
         <View style={styles.optionsWrap}>
           {goals.map(goal => {
             const selected = profile.goal === goal.value;
@@ -100,6 +134,8 @@ export default function ProfileScreen() {
             );
           })}
         </View>
+
+        <AppButton title="Recalculate calories" variant="ghost" onPress={recalculateCalories} />
 
         <Text style={styles.label}>Daily calorie goal</Text>
         <AppInput

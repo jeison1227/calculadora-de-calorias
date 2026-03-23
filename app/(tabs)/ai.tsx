@@ -10,7 +10,7 @@ import { LoadingDots } from '@/components/ui/loading-dots';
 import { palette, radius, spacing, typography } from '@/constants/design-system';
 import { generateNutritionRecommendation, goalLabels, UserGoal } from '@/libreria/ai-nutrition';
 
-const goals: UserGoal[] = ['lose_weight', 'maintain', 'gain_muscle'];
+const goals: UserGoal[] = ['lose_weight', 'maintain', 'gain_weight'];
 
 export default function AiNutritionScreen() {
   const [selectedGoal, setSelectedGoal] = useState<UserGoal>('maintain');
