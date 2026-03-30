@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+=======
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+>>>>>>> 056b0b332ce88c67b49ce551bef38e831d201719
 import OpenAI from "openai";
 
 dotenv.config();
@@ -191,7 +197,12 @@ El alimento ${alimento} con ${peso} gramos contiene aproximadamente ${calorias} 
 
 /* ───────────── INICIAR SERVIDOR ───────────── */
 
+<<<<<<< HEAD
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Backend IA activo`);
   console.log(`🌐 http://192.168.1.13:${PORT}`);
+=======
+app.listen(PORT, () => {
+  console.log(`✅ Backend IA activo en http://localhost:${PORT}`);
+>>>>>>> 056b0b332ce88c67b49ce551bef38e831d201719
 });
